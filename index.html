@@ -1466,11 +1466,479 @@ function ResumePage({user, addNotif}) {
 }
 
 // ─── INTERVIEW PAGE ───────────────────────────────────────────────────────────
+// ─── SMS PHONE NOTIFICATION SIMULATOR ────────────────────────────────────────
+function PhoneNotifSimulator({phone, mentor, student, date, time, onClose}) {
+  const [stage, setStage] = useState('sending'); // sending → delivered → done
+  useEffect(()=>{
+    const t1 = setTimeout(()=>setStage('delivered'),1800);
+    const t2 = setTimeout(()=>setStage('done'),3200);
+    return ()=>{clearTimeout(t1);clearTimeout(t2);};
+  },[]);
+  const msg = `[Vibe Coding] 📅 New Interview Booked!\n\nStudent: ${student}\nSession: ${date} at ${time}\nType: Mock Interview\n\nLog in to confirm or reschedule.\nvibecoding.com/interviews`;
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',backdropFilter:'blur(8px)',zIndex:900,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{maxWidth:440,width:'100%',animation:'fadeIn .3s ease'}}>
+        {/* Phone frame */}
+        <div style={{background:'#1a1a2e',border:'2px solid #2a2a4e',borderRadius:40,padding:'20px 16px 30px',boxShadow:'0 0 60px rgba(0,200,255,.15)',position:'relative'}}>
+          {/* Notch */}
+          <div style={{width:100,height:24,background:'#0d0d1a',borderRadius:12,margin:'0 auto 16px',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            <div style={{width:8,height:8,borderRadius:'50%',background:'#333'}}/>
+            <div style={{flex:1,height:4,background:'#222',borderRadius:2}}/>
+          </div>
+          {/* Status bar */}
+          <div style={{display:'flex',justifyContent:'space-between',padding:'0 8px',marginBottom:12,fontSize:11,color:'#888'}}>
+            <span>9:41 AM</span>
+            <span>📶 📶 🔋</span>
+          </div>
+
+          {/* SMS Notification banner */}
+          <div style={{background:'linear-gradient(135deg,#1e3a5f,#0f2040)',border:'1px solid rgba(0,200,255,.3)',borderRadius:16,padding:16,marginBottom:16,boxShadow:'0 4px 20px rgba(0,200,255,.1)'}}>
+            <div style={{display:'flex',gap:10,alignItems:'flex-start',marginBottom:10}}>
+              <div style={{width:36,height:36,background:'linear-gradient(135deg,#00F5A0,#00C8FF)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>💬</div>
+              <div>
+                <div style={{fontWeight:700,fontSize:13,color:'#fff',marginBottom:2}}>Messages</div>
+                <div style={{fontSize:11,color:'#aaa'}}>Vibe Coding · now</div>
+              </div>
+              <div style={{marginLeft:'auto',fontSize:11,color:'#888'}}>now</div>
+            </div>
+            <div style={{fontFamily:'monospace',fontSize:12,color:'#ddd',lineHeight:1.7,whiteSpace:'pre-line',background:'rgba(0,0,0,.3)',borderRadius:10,padding:12}}>{msg}</div>
+          </div>
+
+          {/* Delivery status */}
+          <div style={{textAlign:'center',padding:'8px 0'}}>
+            {stage==='sending' && (
+              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,color:'#aaa',fontSize:13}}>
+                <span className="loading"/>
+                <span>Sending SMS to {phone}...</span>
+              </div>
+            )}
+            {stage==='delivered' && (
+              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,color:'#00F5A0',fontSize:13,animation:'fadeIn .3s ease'}}>
+                <span style={{fontSize:16}}>✅</span>
+                <span style={{fontWeight:700}}>SMS Delivered to {phone}</span>
+              </div>
+            )}
+            {stage==='done' && (
+              <div style={{animation:'fadeIn .3s ease'}}>
+                <div style={{color:'#00F5A0',fontWeight:700,fontSize:14,marginBottom:4}}>✅ Notification Sent!</div>
+                <div style={{color:'#888',fontSize:12}}>{mentor} has been notified about the new booking</div>
+              </div>
+            )}
+          </div>
+        </div>
+        {stage==='done' && (
+          <button className="btn btn-primary" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={onClose}>
+            Done →
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── PAYMENT MODAL ────────────────────────────────────────────────────────────
+function PaymentModal({interview, onSuccess, onClose}) {
+  const [step, setStep] = useState('details'); // details → payment → processing → success
+  const [topics, setTopics] = useState('');
+  const [card, setCard] = useState({num:'',expiry:'',cvv:'',name:''});
+  const [upiId, setUpiId] = useState('');
+  const [method, setMethod] = useState('card'); // card | upi | netbanking
+  const [processing, setProcessing] = useState(false);
+  const [cardError, setCardError] = useState('');
+
+  const fmtCard = v => v.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim();
+  const fmtExpiry = v => v.replace(/\D/g,'').slice(0,4).replace(/(.{2})/,'$1/').replace(/\/$/,'');
+
+  const validateCard = () => {
+    if(method==='card'){
+      if(card.num.replace(/\s/g,'').length < 16) return 'Enter valid 16-digit card number';
+      if(card.expiry.length < 5) return 'Enter valid expiry (MM/YY)';
+      if(card.cvv.length < 3) return 'Enter valid CVV';
+      if(!card.name.trim()) return 'Enter cardholder name';
+    }
+    if(method==='upi' && !upiId.includes('@')) return 'Enter valid UPI ID (e.g. name@upi)';
+    return '';
+  };
+
+  const pay = () => {
+    const err = validateCard();
+    if(err){setCardError(err);return;}
+    setCardError('');
+    setProcessing(true);
+    setStep('processing');
+    setTimeout(()=>{setStep('success');setProcessing(false);},2500);
+  };
+
+  const BANKS = ['SBI','HDFC','ICICI','Axis','Kotak','Yes Bank'];
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{maxWidth:480,padding:0,overflow:'hidden'}} onClick={e=>e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{background:'linear-gradient(135deg,#0a1628,#0d1f3c)',padding:'20px 24px',borderBottom:'1px solid var(--border)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div>
+              <div style={{fontWeight:800,fontSize:17,marginBottom:2}}>Complete Booking</div>
+              <div style={{fontSize:12,color:'var(--text2)'}}>with {interview.mentor}</div>
+            </div>
+            <button onClick={onClose} style={{background:'none',border:'none',color:'var(--text3)',cursor:'pointer',fontSize:20}}>✕</button>
+          </div>
+        </div>
+
+        {step==='processing' && (
+          <div style={{padding:60,textAlign:'center'}}>
+            <div style={{width:64,height:64,border:'4px solid var(--border)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .8s linear infinite',margin:'0 auto 20px'}}/>
+            <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>Processing Payment...</div>
+            <div style={{fontSize:13,color:'var(--text2)'}}>Please don't close this window</div>
+            <div style={{marginTop:16,fontSize:12,color:'var(--text3)'}}>Securely connecting to payment gateway</div>
+          </div>
+        )}
+
+        {step==='success' && (
+          <div style={{padding:48,textAlign:'center'}}>
+            <div style={{width:72,height:72,background:'rgba(0,245,160,.15)',border:'2px solid var(--accent)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:32,margin:'0 auto 20px',animation:'glow 1s ease-in-out 3'}}>✅</div>
+            <div style={{fontWeight:800,fontSize:22,color:'var(--accent)',marginBottom:8}}>Booking Confirmed!</div>
+            <div style={{fontSize:14,color:'var(--text2)',marginBottom:20,lineHeight:1.6}}>
+              Your interview with <strong style={{color:'var(--text)'}}>{interview.mentor}</strong> is confirmed for<br/>
+              <strong style={{color:'var(--accent2)'}}>{interview.date} at {interview.time}</strong>
+            </div>
+            <div style={{background:'var(--surface2)',borderRadius:12,padding:16,marginBottom:24,textAlign:'left'}}>
+              {[
+                ['Session','Mock Interview · 60 min'],
+                ['Amount Paid',`₹${interview.price}`],
+                ['Transaction ID',`TXN${Date.now().toString().slice(-8)}`],
+                ['Meet Link','Will be sent via email'],
+              ].map(([l,v])=>(
+                <div key={l} style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:13}}>
+                  <span style={{color:'var(--text3)'}}>{l}</span>
+                  <span style={{fontWeight:600}}>{v}</span>
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-primary" style={{width:'100%',justifyContent:'center'}} onClick={onSuccess}>
+              View My Sessions →
+            </button>
+          </div>
+        )}
+
+        {(step==='details' || step==='payment') && (
+          <div style={{padding:24}}>
+            {/* Steps indicator */}
+            <div style={{display:'flex',gap:0,marginBottom:24}}>
+              {['Session Details','Payment'].map((s,i)=>(
+                <div key={s} style={{flex:1,display:'flex',alignItems:'center',gap:0}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <div style={{width:24,height:24,borderRadius:'50%',background:(step==='details'&&i===0)||(step==='payment'&&i<=1)?'var(--accent)':'var(--border)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:(step==='details'&&i===0)||(step==='payment'&&i<=1)?'#000':'var(--text3)',flexShrink:0}}>{i+1}</div>
+                    <span style={{fontSize:12,fontWeight:600,color:(step==='details'&&i===0)||(step==='payment'&&i<=1)?'var(--accent)':'var(--text3)'}}>{s}</span>
+                  </div>
+                  {i===0 && <div style={{flex:1,height:1,background:step==='payment'?'var(--accent)':'var(--border)',margin:'0 8px'}}/>}
+                </div>
+              ))}
+            </div>
+
+            {step==='details' && (
+              <>
+                {/* Session summary card */}
+                <div style={{background:'linear-gradient(135deg,rgba(0,245,160,.08),rgba(0,200,255,.04))',border:'1px solid rgba(0,245,160,.2)',borderRadius:14,padding:18,marginBottom:20}}>
+                  <div style={{display:'flex',gap:14,marginBottom:14}}>
+                    <div style={{fontSize:40}}>{interview.emoji}</div>
+                    <div>
+                      <div style={{fontWeight:800,fontSize:16}}>{interview.mentor}</div>
+                      <div style={{fontSize:13,color:'var(--text2)',marginBottom:6}}>{interview.role}</div>
+                      <span className="badge badge-blue">{interview.type}</span>
+                    </div>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                    {[['📅 Date',interview.date],['🕐 Time',interview.time],['⏱ Duration','60 minutes'],['⭐ Rating',`${interview.rating}/5.0`]].map(([l,v])=>(
+                      <div key={l} style={{background:'rgba(0,0,0,.2)',borderRadius:8,padding:'8px 12px'}}>
+                        <div style={{fontSize:11,color:'var(--text3)',marginBottom:2}}>{l}</div>
+                        <div style={{fontWeight:700,fontSize:13}}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{marginBottom:16}}>
+                  <label>Topics you want to cover (optional)</label>
+                  <textarea rows={3} value={topics} onChange={e=>setTopics(e.target.value)} placeholder="E.g., System Design, Binary Trees, Dynamic Programming, Behavioral questions..." style={{resize:'vertical'}}/>
+                </div>
+
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',borderRadius:10,padding:'14px 18px',marginBottom:20,border:'1px solid var(--border)'}}>
+                  <div>
+                    <div style={{fontSize:13,color:'var(--text3)',marginBottom:2}}>Total Amount</div>
+                    <div style={{fontWeight:800,fontSize:26,color:'var(--accent)',fontFamily:'Space Mono'}}>₹{interview.price}</div>
+                  </div>
+                  <div style={{textAlign:'right',fontSize:12,color:'var(--text3)'}}>
+                    <div>🔒 Secure Payment</div>
+                    <div>Full refund if cancelled 24h prior</div>
+                  </div>
+                </div>
+                <button className="btn btn-primary btn-lg" style={{width:'100%',justifyContent:'center'}} onClick={()=>setStep('payment')}>
+                  Proceed to Payment →
+                </button>
+              </>
+            )}
+
+            {step==='payment' && (
+              <>
+                {/* Amount reminder */}
+                <div style={{display:'flex',justifyContent:'space-between',background:'var(--surface2)',borderRadius:10,padding:'12px 16px',marginBottom:20,border:'1px solid var(--border)'}}>
+                  <span style={{fontSize:13,color:'var(--text2)'}}>Paying for: {interview.type} with {interview.mentor.split(' ')[0]}</span>
+                  <span style={{fontWeight:800,color:'var(--accent)',fontFamily:'Space Mono'}}>₹{interview.price}</span>
+                </div>
+
+                {/* Payment method tabs */}
+                <div style={{display:'flex',gap:8,marginBottom:20}}>
+                  {[['card','💳 Card'],['upi','📱 UPI'],['netbanking','🏦 Net Banking']].map(([m,l])=>(
+                    <button key={m} className={`btn btn-sm ${method===m?'btn-primary':'btn-ghost'}`} style={{flex:1,justifyContent:'center',fontSize:12}} onClick={()=>setMethod(m)}>{l}</button>
+                  ))}
+                </div>
+
+                {method==='card' && (
+                  <div>
+                    <div style={{marginBottom:14}}>
+                      <label>Card Number</label>
+                      <input value={card.num} onChange={e=>setCard({...card,num:fmtCard(e.target.value)})} placeholder="1234 5678 9012 3456" maxLength={19} style={{fontFamily:'Space Mono',letterSpacing:2}}/>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+                      <div>
+                        <label>Expiry Date</label>
+                        <input value={card.expiry} onChange={e=>setCard({...card,expiry:fmtExpiry(e.target.value)})} placeholder="MM/YY" maxLength={5} style={{fontFamily:'Space Mono'}}/>
+                      </div>
+                      <div>
+                        <label>CVV</label>
+                        <input value={card.cvv} onChange={e=>setCard({...card,cvv:e.target.value.replace(/\D/g,'').slice(0,3)})} placeholder="•••" maxLength={3} type="password" style={{fontFamily:'Space Mono'}}/>
+                      </div>
+                    </div>
+                    <div style={{marginBottom:4}}>
+                      <label>Cardholder Name</label>
+                      <input value={card.name} onChange={e=>setCard({...card,name:e.target.value})} placeholder="As on card"/>
+                    </div>
+                    {/* Demo card hint */}
+                    <div style={{background:'rgba(0,200,255,.06)',border:'1px solid rgba(0,200,255,.2)',borderRadius:8,padding:'8px 12px',marginBottom:14,fontSize:11,color:'var(--accent2)'}}>
+                      🧪 Demo Mode: Use any 16-digit number, any future date, any 3-digit CVV
+                    </div>
+                  </div>
+                )}
+
+                {method==='upi' && (
+                  <div style={{marginBottom:14}}>
+                    <label>UPI ID</label>
+                    <input value={upiId} onChange={e=>setUpiId(e.target.value)} placeholder="yourname@paytm / @phonepe / @gpay"/>
+                    <div style={{background:'rgba(0,200,255,.06)',border:'1px solid rgba(0,200,255,.2)',borderRadius:8,padding:'8px 12px',marginTop:10,fontSize:11,color:'var(--accent2)'}}>
+                      🧪 Demo: Enter any ID with @ (e.g. demo@upi)
+                    </div>
+                    <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:12}}>
+                      {['@paytm','@phonepe','@gpay','@ybl','@okaxis'].map(u=>(
+                        <button key={u} className="btn btn-ghost btn-sm" style={{fontSize:11}} onClick={()=>setUpiId(`demo${u}`)}>{u}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {method==='netbanking' && (
+                  <div style={{marginBottom:14}}>
+                    <label>Select Bank</label>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginTop:8}}>
+                      {BANKS.map(b=>(
+                        <button key={b} className="btn btn-ghost btn-sm" style={{justifyContent:'center',padding:'10px 4px',fontSize:12}} onClick={()=>{setCard({...card,name:b});pay();}}>🏦 {b}</button>
+                      ))}
+                    </div>
+                    <div style={{background:'rgba(0,200,255,.06)',border:'1px solid rgba(0,200,255,.2)',borderRadius:8,padding:'8px 12px',marginTop:12,fontSize:11,color:'var(--accent2)'}}>
+                      🧪 Demo: Click any bank to complete payment instantly
+                    </div>
+                  </div>
+                )}
+
+                {cardError && <div style={{color:'var(--accent3)',fontSize:12,marginBottom:10,background:'rgba(255,107,107,.1)',padding:'8px 12px',borderRadius:8}}>⚠️ {cardError}</div>}
+
+                <div style={{display:'flex',gap:10}}>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>setStep('details')}>← Back</button>
+                  {method!=='netbanking' && (
+                    <button className="btn btn-primary" style={{flex:1,justifyContent:'center'}} onClick={pay}>
+                      🔒 Pay ₹{interview.price} Securely
+                    </button>
+                  )}
+                </div>
+
+                <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:14,flexWrap:'wrap'}}>
+                  {['🔒 256-bit SSL','✓ PCI DSS','✓ RBI Compliant'].map(l=>(
+                    <span key={l} style={{fontSize:10,color:'var(--text3)',background:'var(--surface2)',padding:'3px 8px',borderRadius:4}}>{l}</span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── HR SCHEDULE MODAL ────────────────────────────────────────────────────────
+function HRScheduleModal({onClose, onPublish, addNotif}) {
+  const [form, setForm] = useState({name:'',role:'',company:'',phone:'',email:'',type:'Technical',price:'499',date:'',time:'',slots:'3',bio:'',expertise:''});
+  const [step, setStep] = useState('form'); // form → preview → done
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = () => {
+    if(!form.name||!form.phone||!form.date||!form.time){
+      addNotif({type:'error',msg:'⚠️ Please fill Name, Phone, Date and Time',time:'now'});return;
+    }
+    setSubmitting(true);
+    setTimeout(()=>{setSubmitting(false);setStep('preview');},800);
+  };
+
+  const publish = () => {
+    const newSlot = {
+      id: Date.now(),
+      mentor: form.name,
+      role: form.role + ' @ ' + form.company,
+      emoji: '👔',
+      date: form.date,
+      time: form.time,
+      type: form.type,
+      price: parseInt(form.price)||499,
+      rating: 'New',
+      slots: parseInt(form.slots)||3,
+      expertise: form.expertise.split(',').map(e=>e.trim()).filter(Boolean),
+      available: true,
+      hrPhone: form.phone,
+      isHRSlot: true,
+    };
+    onPublish(newSlot);
+    setStep('done');
+    addNotif({type:'success',msg:'🎉 Slot published! Now live in Book Interview tab.',time:'now'});
+  };
+
+  if(step==='done') return (
+    <div className="modal-overlay">
+      <div className="modal" style={{textAlign:'center'}}>
+        <div style={{fontSize:60,marginBottom:16}}>🎉</div>
+        <div style={{fontWeight:800,fontSize:22,color:'var(--accent)',marginBottom:8}}>Slot is LIVE!</div>
+        <div style={{fontSize:14,color:'var(--text2)',marginBottom:16,lineHeight:1.6}}>
+          <strong style={{color:'var(--text)'}}>{form.name}</strong>'s slot is now in the Book Interview tab.<br/>
+          SMS notifications will go to<br/>
+          <strong style={{color:'var(--accent)',fontFamily:'Space Mono'}}>{form.phone}</strong>
+        </div>
+        <div style={{background:'var(--surface2)',borderRadius:12,padding:16,marginBottom:16,textAlign:'left'}}>
+          {[['Interviewer',form.name],['Role',form.role+' @ '+form.company],['Date & Time',form.date+' · '+form.time],['Type',form.type],['Price','₹'+form.price],['Slots',form.slots],['SMS Phone',form.phone]].map(([l,v])=>(
+            <div key={l} style={{display:'flex',justifyContent:'space-between',marginBottom:6,fontSize:13}}>
+              <span style={{color:'var(--text3)'}}>{l}</span><span style={{fontWeight:600,color:'var(--text)'}}>{v}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{background:'#0d1f2d',border:'1px solid rgba(0,200,255,.2)',borderRadius:12,padding:14,marginBottom:20,textAlign:'left'}}>
+          <div style={{fontSize:11,fontWeight:700,color:'var(--accent2)',marginBottom:8}}>📱 SMS sent to mentor on each booking:</div>
+          <div style={{fontFamily:'monospace',fontSize:11,color:'#aaa',lineHeight:1.7,whiteSpace:'pre-line'}}>[Vibe Coding] New Booking!\nStudent booked your session.\nDate: {form.date} at {form.time}\nType: {form.type}</div>
+        </div>
+        <button className="btn btn-primary" style={{width:'100%',justifyContent:'center'}} onClick={onClose}>
+          ✓ Go Book This Slot →
+        </button>
+      </div>
+    </div>
+  );
+
+  if(step==='preview') return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <div style={{fontWeight:800,fontSize:17,marginBottom:4}}>Preview Your Slot</div>
+        <div style={{fontSize:13,color:'var(--text2)',marginBottom:20}}>This is how students will see you</div>
+        {/* Preview card */}
+        <div className="card" style={{padding:20,marginBottom:20,borderColor:'rgba(0,245,160,.2)'}}>
+          <div style={{display:'flex',gap:14,marginBottom:14}}>
+            <div style={{fontSize:40}}>👔</div>
+            <div>
+              <div style={{fontWeight:800,fontSize:15}}>{form.name||'Your Name'}</div>
+              <div style={{fontSize:12,color:'var(--text2)',marginBottom:4}}>{form.role} @ {form.company}</div>
+              <div style={{display:'flex',gap:6}}>
+                <span className="badge badge-blue">{form.type}</span>
+                <span style={{fontSize:12,color:'var(--accent4)'}}>⭐ New</span>
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:12}}>
+            {form.expertise.split(',').filter(Boolean).map(e=><span key={e} className="tag">{e.trim()}</span>)}
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',background:'var(--surface2)',borderRadius:8,padding:'10px 14px',marginBottom:12}}>
+            <div><div style={{fontSize:12,color:'var(--text3)'}}>Next Slot</div><div style={{fontWeight:700,fontSize:14}}>{form.date} · {form.time}</div></div>
+            <div style={{textAlign:'right'}}><div style={{fontSize:12,color:'var(--text3)'}}>Price</div><div style={{fontWeight:700,fontSize:18,color:'var(--accent)',fontFamily:'Space Mono'}}>₹{form.price}</div></div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <div style={{flex:1,background:'var(--accent)',borderRadius:8,padding:'8px',textAlign:'center',fontWeight:700,fontSize:13,color:'#000'}}>Book Now</div>
+            <div style={{fontSize:12,color:'var(--text3)',display:'flex',alignItems:'center',gap:4}}>🎫 {form.slots} slots</div>
+          </div>
+        </div>
+        <div style={{background:'rgba(0,200,255,.08)',border:'1px solid rgba(0,200,255,.2)',borderRadius:10,padding:14,marginBottom:20,fontSize:13}}>
+          <div style={{fontWeight:700,color:'var(--accent2)',marginBottom:4}}>📱 SMS Notifications</div>
+          <div style={{color:'var(--text2)'}}>When a student books you, an SMS will be sent to <strong style={{color:'var(--accent)'}}>{form.phone}</strong></div>
+        </div>
+        <div style={{display:'flex',gap:10}}>
+          <button className="btn btn-ghost" onClick={()=>setStep('form')}>← Edit</button>
+          <button className="btn btn-primary" style={{flex:1,justifyContent:'center'}} onClick={publish}>🚀 Publish Slot</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{maxWidth:520}} onClick={e=>e.stopPropagation()}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+          <div>
+            <div style={{fontWeight:800,fontSize:18}}>Schedule as Interviewer</div>
+            <div style={{fontSize:13,color:'var(--text2)',marginTop:2}}>Create your slot & get SMS when students book</div>
+          </div>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'var(--text3)',cursor:'pointer',fontSize:20}}>✕</button>
+        </div>
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+          <div style={{gridColumn:'1/-1'}}><label>Full Name *</label><input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Vikram Shah"/></div>
+          <div><label>Your Role *</label><input value={form.role} onChange={e=>setForm({...form,role:e.target.value})} placeholder="Sr. SDE"/></div>
+          <div><label>Company *</label><input value={form.company} onChange={e=>setForm({...form,company:e.target.value})} placeholder="Google"/></div>
+          <div><label>Phone Number * (for SMS alerts)</label><input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder="+91 98765 43210" type="tel"/></div>
+          <div><label>Email</label><input value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="you@company.com" type="email"/></div>
+        </div>
+
+        <div style={{background:'rgba(0,245,160,.06)',border:'1px solid rgba(0,245,160,.2)',borderRadius:10,padding:12,marginBottom:14,fontSize:12,color:'var(--accent)'}}>
+          📱 <strong>SMS Alerts:</strong> When a student books your slot, you'll receive an SMS on the phone number above with their details.
+        </div>
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+          <div><label>Interview Type</label>
+            <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})}>
+              {['Technical','Behavioral','System Design','Mock Full Interview','DSA','HR Round'].map(t=><option key={t}>{t}</option>)}
+            </select>
+          </div>
+          <div><label>Price (₹)</label><input value={form.price} onChange={e=>setForm({...form,price:e.target.value.replace(/\D/g,'')})} placeholder="499" type="text"/></div>
+          <div><label>Date *</label><input value={form.date} onChange={e=>setForm({...form,date:e.target.value})} placeholder="Feb 28, 2026" type="text"/></div>
+          <div><label>Time *</label><input value={form.time} onChange={e=>setForm({...form,time:e.target.value})} placeholder="3:00 PM"/></div>
+          <div style={{gridColumn:'1/-1'}}><label>Available Slots</label>
+            <select value={form.slots} onChange={e=>setForm({...form,slots:e.target.value})}>
+              {['1','2','3','4','5'].map(n=><option key={n}>{n}</option>)}
+            </select>
+          </div>
+          <div style={{gridColumn:'1/-1'}}><label>Your Expertise (comma separated)</label><input value={form.expertise} onChange={e=>setForm({...form,expertise:e.target.value})} placeholder="DSA, System Design, React, Node.js"/></div>
+          <div style={{gridColumn:'1/-1'}}><label>Short Bio</label><textarea rows={2} value={form.bio} onChange={e=>setForm({...form,bio:e.target.value})} placeholder="Brief intro about your experience..." style={{resize:'vertical'}}/></div>
+        </div>
+
+        <button className="btn btn-primary btn-lg" style={{width:'100%',justifyContent:'center'}} onClick={submit} disabled={submitting}>
+          {submitting?<><span className="loading"/> Processing...</>:'Preview Slot →'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── INTERVIEW PAGE ───────────────────────────────────────────────────────────
 function InterviewPage({user, addNotif}) {
   const [tab, setTab] = useState('book');
-  const [bookingModal, setBookingModal] = useState(null);
+  const [payModal, setPayModal] = useState(null);
+  const [hrModal, setHrModal] = useState(false);
   const [booked, setBooked] = useState([]);
-  const [practiceMode, setPracticeMode] = useState(false);
+  const [customSlots, setCustomSlots] = useState([]); // HR-published slots
+  const [phoneNotif, setPhoneNotif] = useState(null);
   const [aiAnswer, setAiAnswer] = useState('');
   const [qIdx, setQIdx] = useState(0);
   const [score, setScore] = useState(null);
@@ -1495,49 +1963,99 @@ function InterviewPage({user, addNotif}) {
     }, 2000);
   };
 
+  const handleBookingSuccess = (interview) => {
+    setBooked(b=>[...b, {...interview, bookedAt: new Date().toLocaleString()}]);
+    setPayModal(null);
+    // Use the HR's real phone if available, else demo number
+    const mentorPhone = interview.hrPhone || '+91 98765 43210';
+    setPhoneNotif({
+      phone: mentorPhone,
+      mentor: interview.mentor,
+      student: user.name,
+      date: interview.date,
+      time: interview.time,
+    });
+    addNotif({type:'success', msg:`🎉 Interview booked with ${interview.mentor}! SMS sent to mentor.`, time:'now'});
+  };
+
   return (
     <div className="page-content fade-in">
       <div className="section-header">
         <div className="section-title">Interview Center</div>
+        <button className="btn btn-secondary btn-sm" onClick={()=>setHrModal(true)}>
+          👔 Schedule as HR/Mentor
+        </button>
       </div>
-      <div className="tabs" style={{maxWidth:400}}>
-        {['book','practice','results'].map(t=><div key={t} className={`tab ${tab===t?'active':''}`} onClick={()=>setTab(t)}>{t==='book'?'Book Interview':t==='practice'?'AI Practice':'My Sessions'}</div>)}
+
+      <div className="tabs" style={{maxWidth:500,marginBottom:20}}>
+        {[['book','📅 Book Interview'],['practice','🤖 AI Practice'],['results','My Sessions']].map(([t,l])=>(
+          <div key={t} className={`tab ${tab===t?'active':''}`} onClick={()=>setTab(t)} style={{fontSize:13,position:'relative'}}>
+            {l}
+            {t==='results'&&booked.length>0&&<span style={{position:'absolute',top:4,right:4,width:6,height:6,background:'var(--accent)',borderRadius:'50%'}}/>}
+          </div>
+        ))}
       </div>
 
       {tab==='book' && (
-        <div className="grid-2" style={{gap:16}}>
-          {INTERVIEWS.map(iv=>(
-            <div key={iv.id} className="card" style={{padding:20}}>
-              <div style={{display:'flex',gap:14,marginBottom:14}}>
-                <div style={{fontSize:40}}>{iv.emoji}</div>
-                <div>
-                  <div style={{fontWeight:800,fontSize:15}}>{iv.mentor}</div>
-                  <div style={{fontSize:12,color:'var(--text2)',marginBottom:4}}>{iv.role}</div>
-                  <div style={{display:'flex',gap:6}}>
-                    <span className="badge badge-blue">{iv.type}</span>
-                    <span style={{fontSize:12,color:'var(--accent4)'}}>⭐ {iv.rating}</span>
-                  </div>
-                </div>
-              </div>
-              <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
-                {iv.expertise.map(e=><span key={e} className="tag">{e}</span>)}
-              </div>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',borderRadius:8,padding:'10px 14px',marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:12,color:'var(--text3)'}}>Next Slot</div>
-                  <div style={{fontWeight:700,fontSize:14}}>{iv.date} · {iv.time}</div>
-                </div>
-                <div style={{textAlign:'right'}}>
-                  <div style={{fontSize:12,color:'var(--text3)'}}>Price</div>
-                  <div style={{fontWeight:700,fontSize:18,color:'var(--accent)',fontFamily:'Space Mono'}}>₹{iv.price}</div>
-                </div>
-              </div>
-              <div style={{display:'flex',gap:8}}>
-                <button className="btn btn-primary btn-sm" style={{flex:1,justifyContent:'center'}} onClick={()=>setBookingModal(iv)}>Book Now</button>
-                <div style={{fontSize:12,color:'var(--text3)',display:'flex',alignItems:'center',gap:4}}>🎫 {iv.slots} slots left</div>
-              </div>
+        <div>
+          <div style={{background:'linear-gradient(135deg,rgba(0,200,255,.08),rgba(0,245,160,.04))',border:'1px solid rgba(0,200,255,.2)',borderRadius:12,padding:14,marginBottom:20,display:'flex',gap:12,alignItems:'center'}}>
+            <span style={{fontSize:20}}>💡</span>
+            <div style={{fontSize:13,color:'var(--text2)'}}>
+              <strong style={{color:'var(--text)'}}>How it works:</strong> Book a slot → pay securely → mentor gets SMS notification → join the session on the scheduled date.
             </div>
-          ))}
+          </div>
+          <div className="grid-2" style={{gap:16}}>
+            {[...INTERVIEWS, ...customSlots].map(iv=>{
+              const isBooked = booked.some(b=>b.id===iv.id);
+              return (
+                <div key={iv.id} className="card" style={{padding:20,borderColor:isBooked?'rgba(0,245,160,.3)':'var(--border)',transition:'all .2s'}}>
+                  {isBooked && <div style={{background:'rgba(0,245,160,.1)',border:'1px solid rgba(0,245,160,.2)',borderRadius:8,padding:'6px 12px',marginBottom:12,fontSize:12,fontWeight:700,color:'var(--accent)',textAlign:'center'}}>✅ Already Booked</div>}
+                  {iv.isHRSlot && !isBooked && <div style={{background:'rgba(0,200,255,.1)',border:'1px solid rgba(0,200,255,.2)',borderRadius:8,padding:'5px 12px',marginBottom:12,fontSize:11,fontWeight:700,color:'var(--accent2)',textAlign:'center'}}>✨ NEW — Added by HR/Mentor</div>}
+                  <div style={{display:'flex',gap:14,marginBottom:14}}>
+                    <div style={{fontSize:40}}>{iv.emoji}</div>
+                    <div>
+                      <div style={{fontWeight:800,fontSize:15}}>{iv.mentor}</div>
+                      <div style={{fontSize:12,color:'var(--text2)',marginBottom:4}}>{iv.role}</div>
+                      <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                        <span className="badge badge-blue">{iv.type}</span>
+                        <span style={{fontSize:12,color:'var(--accent4)'}}>⭐ {iv.rating}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
+                    {iv.expertise.map(e=><span key={e} className="tag">{e}</span>)}
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',borderRadius:8,padding:'10px 14px',marginBottom:12}}>
+                    <div>
+                      <div style={{fontSize:12,color:'var(--text3)'}}>Next Slot</div>
+                      <div style={{fontWeight:700,fontSize:14}}>{iv.date} · {iv.time}</div>
+                    </div>
+                    <div style={{textAlign:'right'}}>
+                      <div style={{fontSize:12,color:'var(--text3)'}}>Price</div>
+                      <div style={{fontWeight:700,fontSize:22,color:'var(--accent)',fontFamily:'Space Mono'}}>₹{iv.price}</div>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                    <button
+                      className={`btn btn-sm ${isBooked?'btn-ghost':'btn-primary'}`}
+                      style={{flex:1,justifyContent:'center',opacity:isBooked?.7:1}}
+                      disabled={isBooked}
+                      onClick={()=>!isBooked&&setPayModal(iv)}>
+                      {isBooked?'✅ Booked':'💳 Book Now'}
+                    </button>
+                    <div style={{fontSize:12,color:'var(--text3)',display:'flex',alignItems:'center',gap:4}}>🎫 {iv.slots} left</div>
+                  </div>
+                  {iv.isHRSlot && !isBooked && (
+                    <button className="btn btn-ghost btn-sm" style={{width:'100%',justifyContent:'center',marginTop:8,fontSize:11,color:'var(--accent2)',borderColor:'rgba(0,200,255,.3)'}}
+                      onClick={()=>setPhoneNotif({phone:iv.hrPhone,mentor:iv.mentor,student:'[Test Preview]',date:iv.date,time:iv.time})}>
+                      📱 Preview SMS Notification
+                    </button>
+                  )}
+                  {!isBooked && !iv.isHRSlot && <div style={{fontSize:11,color:'var(--text3)',textAlign:'center',marginTop:6}}>📱 Mentor gets SMS on booking</div>}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -1547,14 +2065,14 @@ function InterviewPage({user, addNotif}) {
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
               <div>
                 <div style={{fontWeight:700,fontSize:15}}>Behavioral Question {qIdx+1}/{bqQs.length}</div>
-                <div style={{fontSize:12,color:'var(--text2)'}}>Answer out loud or type your response</div>
+                <div style={{fontSize:12,color:'var(--text2)'}}>Answer using STAR method for best score</div>
               </div>
               <div className="badge badge-blue">STAR Method</div>
             </div>
             <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:18,marginBottom:16,fontSize:15,fontWeight:600,lineHeight:1.5}}>
               💬 {bqQs[qIdx]}
             </div>
-            <textarea rows={6} value={aiAnswer} onChange={e=>setAiAnswer(e.target.value)} placeholder="Type your answer here using STAR method (Situation, Task, Action, Result)..." style={{resize:'vertical',marginBottom:12}}/>
+            <textarea rows={6} value={aiAnswer} onChange={e=>setAiAnswer(e.target.value)} placeholder="Type your answer here... (Situation → Task → Action → Result)" style={{resize:'vertical',marginBottom:12}}/>
             <div style={{display:'flex',gap:8}}>
               <button className="btn btn-ghost btn-sm" onClick={()=>{setQIdx((qIdx-1+bqQs.length)%bqQs.length);setAiAnswer('');setScore(null);}}>← Prev</button>
               <button className="btn btn-primary btn-sm" onClick={getAIScore} disabled={scoring||!aiAnswer.trim()}>
@@ -1563,7 +2081,6 @@ function InterviewPage({user, addNotif}) {
               <button className="btn btn-ghost btn-sm" onClick={()=>{setQIdx((qIdx+1)%bqQs.length);setAiAnswer('');setScore(null);}}>Next →</button>
             </div>
           </div>
-
           {score && (
             <div className="card" style={{padding:24,borderColor:'rgba(0,245,160,.2)'}}>
               <div style={{display:'flex',gap:20,alignItems:'center',marginBottom:16}}>
@@ -1595,48 +2112,71 @@ function InterviewPage({user, addNotif}) {
             <div style={{textAlign:'center',padding:60,color:'var(--text3)'}}>
               <div style={{fontSize:48,marginBottom:12}}>🎤</div>
               <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>No interviews booked yet</div>
-              <div style={{fontSize:13,marginBottom:20}}>Book a mock interview with an expert</div>
-              <button className="btn btn-primary" onClick={()=>setTab('book')}>Browse Interviewers →</button>
+              <div style={{fontSize:13,marginBottom:20}}>Book a session with an expert mentor</div>
+              <button className="btn btn-primary" onClick={()=>setTab('book')}>Browse Mentors →</button>
             </div>
-          ) : booked.map(b=>(
-            <div key={b.id} className="card" style={{padding:20,marginBottom:12}}>
-              <div style={{display:'flex',justifyContent:'space-between'}}>
-                <div style={{fontWeight:700}}>{b.mentor}</div>
-                <span className="badge badge-green">Booked ✓</span>
-              </div>
-              <div style={{fontSize:13,color:'var(--text2)',marginTop:4}}>{b.date} · {b.time}</div>
-            </div>
-          ))}
+          ) : (
+            <>
+              <div style={{fontWeight:700,marginBottom:16}}>Your Booked Sessions ({booked.length})</div>
+              {booked.map((b,i)=>(
+                <div key={i} className="card" style={{padding:20,marginBottom:12,borderLeft:'3px solid var(--accent)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:8}}>
+                    <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                      <div style={{fontSize:32}}>{b.emoji}</div>
+                      <div>
+                        <div style={{fontWeight:800,fontSize:15}}>{b.mentor}</div>
+                        <div style={{fontSize:12,color:'var(--text2)'}}>{b.role}</div>
+                      </div>
+                    </div>
+                    <span className="badge badge-green">✅ Confirmed</span>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginTop:14}}>
+                    {[['📅 Date',b.date],['🕐 Time',b.time],['💳 Paid',`₹${b.price}`]].map(([l,v])=>(
+                      <div key={l} style={{background:'var(--surface2)',borderRadius:8,padding:'8px 12px'}}>
+                        <div style={{fontSize:11,color:'var(--text3)',marginBottom:2}}>{l}</div>
+                        <div style={{fontWeight:700,fontSize:13}}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{display:'flex',gap:8,marginTop:14}}>
+                    <div style={{background:'rgba(0,200,255,.1)',border:'1px solid rgba(0,200,255,.2)',borderRadius:8,padding:'6px 14px',fontSize:12,color:'var(--accent2)',flex:1,textAlign:'center'}}>
+                      📹 Meet link will be sent 30 min before
+                    </div>
+                    <button className="btn btn-ghost btn-sm">Add to Calendar</button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       )}
 
-      {/* Booking Modal */}
-      {bookingModal && (
-        <div className="modal-overlay" onClick={()=>setBookingModal(null)}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
-            <div style={{fontWeight:800,fontSize:18,marginBottom:4}}>Book Interview</div>
-            <div style={{fontSize:13,color:'var(--text2)',marginBottom:20}}>with {bookingModal.mentor}</div>
-            <div style={{background:'var(--surface2)',borderRadius:10,padding:16,marginBottom:16}}>
-              <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-                <span>{bookingModal.type} Interview</span>
-                <span style={{color:'var(--accent)',fontWeight:700}}>₹{bookingModal.price}</span>
-              </div>
-              <div style={{fontSize:12,color:'var(--text2)'}}>{bookingModal.date} · {bookingModal.time} · 60 minutes</div>
-            </div>
-            <div style={{marginBottom:16}}>
-              <label>Preferred topics to cover</label>
-              <textarea rows={3} placeholder="E.g., System Design, Arrays, Dynamic Programming..." style={{resize:'vertical'}}/>
-            </div>
-            <div style={{marginBottom:20}}>
-              <label>Payment (Demo)</label>
-              <input placeholder="Card number (demo mode - any number works)"/>
-            </div>
-            <div style={{display:'flex',gap:10}}>
-              <button className="btn btn-primary" style={{flex:1,justifyContent:'center'}} onClick={()=>{setBooked([...booked,bookingModal]);setBookingModal(null);setTab('results');addNotif({type:'success',msg:`Interview booked with ${bookingModal.mentor}! ✅`,time:'now'});}}>Confirm & Pay ₹{bookingModal.price}</button>
-              <button className="btn btn-ghost" onClick={()=>setBookingModal(null)}>Cancel</button>
-            </div>
-          </div>
-        </div>
+      {/* Payment Modal */}
+      {payModal && (
+        <PaymentModal
+          interview={payModal}
+          onSuccess={()=>handleBookingSuccess(payModal)}
+          onClose={()=>setPayModal(null)}
+        />
+      )}
+
+      {/* HR Schedule Modal */}
+      {hrModal && <HRScheduleModal
+        onClose={()=>setHrModal(false)}
+        onPublish={(slot)=>{setCustomSlots(s=>[...s, slot]);setHrModal(false);setTab('book');}}
+        addNotif={addNotif}
+      />}
+
+      {/* Phone SMS Notification Simulator */}
+      {phoneNotif && (
+        <PhoneNotifSimulator
+          phone={phoneNotif.phone}
+          mentor={phoneNotif.mentor}
+          student={phoneNotif.student}
+          date={phoneNotif.date}
+          time={phoneNotif.time}
+          onClose={()=>{setPhoneNotif(null); if(booked.length>0) setTab('results');}}
+        />
       )}
     </div>
   );
