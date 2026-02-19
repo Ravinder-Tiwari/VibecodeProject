@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vibe Coding — AI-Powered EdTech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#080C14;
+  --surface:#0D1526;
+  --surface2:#111D33;
+  --border:#1E2D4A;
+  --accent:#00F5A0;
+  --accent2:#00C8FF;
+  --accent3:#FF6B6B;
+  --accent4:#FFD93D;
+  --text:#E8F4F8;
+  --text2:#8BA3BC;
+  --text3:#4A6580;
+  --glow: 0 0 20px rgba(0,245,160,0.3);
+  --glow2: 0 0 20px rgba(0,200,255,0.3);
+}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow-x:hidden;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes slideIn{from{transform:translateX(-20px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes glow{0%,100%{box-shadow:0 0 5px rgba(0,245,160,.3);}50%{box-shadow:0 0 25px rgba(0,245,160,.7);}}
+@keyframes scanline{0%{transform:translateY(-100%);}100%{transform:translateY(100vh);}}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+@keyframes progress-fill{from{width:0}to{width:var(--w)}}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+
+.fade-in{animation:fadeIn .4s ease forwards;}
+.slide-in{animation:slideIn .3s ease forwards;}
+
+/* Monaco-like editor */
+.code-area{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;background:#060A12;border:1px solid var(--border);border-radius:8px;padding:16px;color:#ABB2BF;resize:none;width:100%;min-height:300px;outline:none;}
+.code-area:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,245,160,.1);}
+
+/* Global UI */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:600;font-size:13px;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#000;box-shadow:0 0 15px rgba(0,245,160,.3);}
+.btn-primary:hover{background:#00FFB0;box-shadow:var(--glow);transform:translateY(-1px);}
+.btn-secondary{background:transparent;color:var(--accent);border:1px solid var(--accent);opacity:.8;}
+.btn-secondary:hover{background:rgba(0,245,160,.08);opacity:1;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--text2);color:var(--text);}
+.btn-danger{background:rgba(255,107,107,.15);color:var(--accent3);border:1px solid rgba(255,107,107,.3);}
+.btn-danger:hover{background:rgba(255,107,107,.25);}
+.btn-blue{background:rgba(0,200,255,.15);color:var(--accent2);border:1px solid rgba(0,200,255,.3);}
+.btn-blue:hover{background:rgba(0,200,255,.25);}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn-lg{padding:12px 28px;font-size:15px;}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:all .2s;}
+.card:hover{border-color:rgba(0,245,160,.2);}
+.card-glow{box-shadow:0 0 30px rgba(0,245,160,.05);}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;font-family:'Space Mono',monospace;}
+.badge-green{background:rgba(0,245,160,.15);color:var(--accent);border:1px solid rgba(0,245,160,.2);}
+.badge-blue{background:rgba(0,200,255,.15);color:var(--accent2);border:1px solid rgba(0,200,255,.2);}
+.badge-red{background:rgba(255,107,107,.15);color:var(--accent3);border:1px solid rgba(255,107,107,.2);}
+.badge-yellow{background:rgba(255,217,61,.15);color:var(--accent4);border:1px solid rgba(255,217,61,.2);}
+.badge-gray{background:rgba(139,163,188,.1);color:var(--text2);border:1px solid var(--border);}
+
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s ease;}
+
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none;width:100%;transition:border-color .2s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,245,160,.1);}
+input::placeholder{color:var(--text3);}
+label{display:block;margin-bottom:6px;font-size:13px;color:var(--text2);font-weight:600;}
+
+/* Sidebar */
+.sidebar{width:240px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100;transition:transform .3s;}
+.sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.logo-mark{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#000;font-size:16px;animation:glow 2s ease-in-out infinite;}
+.sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto;}
+.nav-section{margin-bottom:20px;}
+.nav-section-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:0 8px;margin-bottom:8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .2s;color:var(--text2);font-size:13px;font-weight:600;margin-bottom:2px;border:1px solid transparent;}
+.nav-item:hover{background:var(--surface2);color:var(--text);border-color:var(--border);}
+.nav-item.active{background:rgba(0,245,160,.1);color:var(--accent);border-color:rgba(0,245,160,.2);}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.nav-item .badge-count{margin-left:auto;background:var(--accent);color:#000;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;}
+
+/* Main content */
+.main{margin-left:240px;min-height:100vh;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:90;}
+.topbar-left{display:flex;align-items:center;gap:16px;}
+.page-content{padding:24px;max-width:1400px;}
+
+/* Hero / Landing */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(0,245,160,.08) 0%,transparent 70%);}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(30,45,74,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(30,45,74,.3) 1px,transparent 1px);background-size:40px 40px;animation:pulse 4s ease-in-out infinite;}
+.hero-content{position:relative;z-index:2;max-width:900px;padding:40px;}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(0,245,160,.1);border:1px solid rgba(0,245,160,.2);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:24px;}
+.hero h1{font-size:72px;font-weight:800;line-height:1;margin-bottom:20px;background:linear-gradient(135deg,#fff 0%,var(--accent) 50%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero p{font-size:18px;color:var(--text2);max-width:600px;margin:0 auto 36px;line-height:1.7;}
+.hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+.hero-stats{display:flex;gap:40px;justify-content:center;margin-top:60px;flex-wrap:wrap;}
+.stat-item{text-align:center;}
+.stat-num{font-size:36px;font-weight:800;color:var(--accent);font-family:'Space Mono',monospace;}
+.stat-label{font-size:13px;color:var(--text3);}
+
+/* Career Score Ring */
+.score-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.score-ring svg{transform:rotate(-90deg);}
+.score-ring-inner{position:absolute;text-align:center;}
+.score-ring-num{font-size:28px;font-weight:800;font-family:'Space Mono',monospace;color:var(--accent);}
+.score-ring-label{font-size:10px;color:var(--text3);font-weight:600;}
+
+/* Charts */
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:120px;}
+.bar{flex:1;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--accent),rgba(0,245,160,.3));transition:height .5s ease;position:relative;cursor:pointer;}
+.bar:hover{background:linear-gradient(180deg,#00FFB0,var(--accent));}
+.bar-label{font-size:10px;color:var(--text3);text-align:center;margin-top:4px;}
+
+/* Problem List */
+.problem-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:8px;cursor:pointer;transition:all .2s;border:1px solid transparent;}
+.problem-row:hover{background:var(--surface2);border-color:var(--border);}
+.problem-row.solved{opacity:.7;}
+
+/* Code editor layout */
+.editor-layout{display:grid;grid-template-columns:400px 1fr 320px;height:calc(100vh - 60px);overflow:hidden;}
+.editor-panel{overflow-y:auto;padding:16px;}
+.editor-panel:not(:last-child){border-right:1px solid var(--border);}
+
+/* Line numbers */
+.line-num-area{display:flex;}
+.line-nums{padding:16px 8px 16px 16px;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;text-align:right;user-select:none;background:#060A12;border-radius:8px 0 0 8px;border:1px solid var(--border);border-right:none;}
+.code-input{border-radius:0 8px 8px 0;border-left:none;}
+
+/* Notification */
+.notif{position:fixed;top:80px;right:24px;z-index:1000;max-width:340px;}
+.notif-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;animation:slideIn .3s ease;display:flex;gap:12px;align-items:flex-start;box-shadow:0 8px 30px rgba(0,0,0,.3);}
+.notif-item.success{border-left:3px solid var(--accent);}
+.notif-item.error{border-left:3px solid var(--accent3);}
+.notif-item.info{border-left:3px solid var(--accent2);}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;animation:fadeIn .2s ease;}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:20px;}
+.tab{flex:1;padding:8px;border-radius:8px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);transition:all .2s;}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.3);}
+
+/* Roadmap Card */
+.roadmap-card{padding:20px;cursor:pointer;}
+.roadmap-card-icon{font-size:32px;margin-bottom:12px;}
+.roadmap-card-title{font-size:16px;font-weight:700;margin-bottom:4px;}
+.roadmap-card-desc{font-size:12px;color:var(--text2);margin-bottom:12px;}
+
+/* Course Card */
+.course-card{overflow:hidden;}
+.course-thumb{height:140px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:14px;}
+.course-meta{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+
+/* Interview Card */
+.interview-slot{padding:16px;cursor:pointer;display:flex;gap:16px;align-items:center;}
+.interview-slot:hover{background:var(--surface2);}
+.time-badge{background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.2);border-radius:8px;padding:8px 12px;text-align:center;min-width:70px;}
+
+/* Job Card */
+.job-card{padding:18px;}
+.company-logo{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;}
+
+/* Tooltip */
+.tooltip-wrap{position:relative;display:inline-block;}
+.tooltip{position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;white-space:nowrap;color:var(--text);pointer-events:none;opacity:0;transition:opacity .2s;z-index:200;}
+.tooltip-wrap:hover .tooltip{opacity:1;}
+
+/* AI Chat */
+.ai-message{padding:12px 16px;border-radius:12px;margin-bottom:8px;max-width:80%;font-size:13px;line-height:1.6;}
+.ai-message.bot{background:var(--surface2);border:1px solid var(--border);margin-right:auto;}
+.ai-message.user{background:rgba(0,245,160,.1);border:1px solid rgba(0,245,160,.2);margin-left:auto;}
+
+/* Scrollable horizontal */
+.hscroll{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;}
+.hscroll::-webkit-scrollbar{height:4px;}
+
+/* Grid layouts */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+@media(max-width:900px){.grid-4,.grid-3{grid-template-columns:1fr 1fr;}.grid-2{grid-template-columns:1fr;}.editor-layout{grid-template-columns:1fr;}.sidebar{transform:translateX(-100%);}.main{margin-left:0;}}
+
+/* Landing sections */
+.feature-card{padding:28px;border-radius:16px;background:var(--surface);border:1px solid var(--border);transition:all .3s;}
+.feature-card:hover{transform:translateY(-4px);border-color:rgba(0,245,160,.3);box-shadow:0 12px 40px rgba(0,0,0,.3);}
+.feature-icon{font-size:36px;margin-bottom:16px;}
+.feature-title{font-size:18px;font-weight:700;margin-bottom:8px;}
+.feature-desc{font-size:14px;color:var(--text2);line-height:1.6;}
+
+/* Pricing card */
+.price-card{padding:28px;border-radius:16px;background:var(--surface);border:1px solid var(--border);text-align:center;}
+.price-card.featured{border-color:var(--accent);box-shadow:0 0 40px rgba(0,245,160,.1);}
+.price-amount{font-size:48px;font-weight:800;font-family:'Space Mono',monospace;color:var(--accent);}
+
+/* Leaderboard */
+.lb-row{display:flex;align-items:center;gap:16px;padding:12px 16px;border-radius:8px;transition:all .2s;}
+.lb-row:hover{background:var(--surface2);}
+.lb-rank{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;width:32px;text-align:center;}
+
+/* Resume builder */
+.resume-preview{background:#fff;color:#111;border-radius:8px;padding:32px;font-family:Georgia,serif;}
+.resume-name{font-size:28px;font-weight:700;margin-bottom:4px;}
+.resume-title{font-size:16px;color:#555;margin-bottom:16px;}
+.resume-section{margin-bottom:16px;}
+.resume-section h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #333;padding-bottom:4px;margin-bottom:8px;}
+
+/* Streak calendar */
+.streak-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;}
+.streak-day{width:14px;height:14px;border-radius:2px;background:var(--border);}
+.streak-day.active{background:var(--accent);}
+.streak-day.medium{background:rgba(0,245,160,.5);}
+.streak-day.low{background:rgba(0,245,160,.2);}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.section-title{font-size:20px;font-weight:800;}
+.divider{height:1px;background:var(--border);margin:24px 0;}
+
+/* AI Score gauge */
+.gauge-wrap{text-align:center;}
+
+/* Skill bars */
+.skill-bar-label{display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;}
+.skill-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:12px;}
+.skill-fill{height:100%;border-radius:4px;transition:width .8s ease;}
+
+/* Loading */
+.loading{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+
+/* Tag */
+.tag{display:inline-flex;align-items:center;padding:3px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:11px;color:var(--text2);margin:2px;}
+
+/* Checkbox */
+.checkbox{width:18px;height:18px;border-radius:4px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;}
+.checkbox.checked{background:var(--accent);border-color:var(--accent);}
+
+/* Avatar */
+.avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
+
+/* Notification dot */
+.notif-dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--accent3);border-radius:50%;border:2px solid var(--surface);}
+
+/* Confetti */
+@keyframes confetti-fall{0%{transform:translateY(-10px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+.confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;animation:confetti-fall linear forwards;z-index:9999;pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const {useState, useEffect, useRef, useCallback, createContext, useContext} = React;
+
+// ─── GLOBAL STATE ────────────────────────────────────────────────────────────
+const AppContext = createContext(null);
+
+const INITIAL_USER = {
+  id: 1, name: 'Arjun Sharma', email: 'arjun@vibecoding.com',
+  role: 'student', avatar: 'AS', streak: 12, coins: 840,
+  joinDate: '2024-01-15', skills: ['C','Python','JavaScript','DSA'],
+  careerScore: { overall: 67, coding: 72, dsa: 58, consistency: 85, resume: 54, interview: 44, projects: 71 },
+  progress: { basics: 72, dsa: 45, development: 61, resume: 80, interview: 30, jobs: 20 },
+  solvedProblems: [1,2,3,5,7,8,12,15,18,20,22,24,25],
+  notifications: [
+    {id:1,type:'success',msg:'You solved "Two Sum"! +50 XP',read:false,time:'2m ago'},
+    {id:2,type:'info',msg:'Weekly report is ready 📊',read:false,time:'1h ago'},
+    {id:3,type:'warning',msg:'Keep your streak! Day 12 🔥',read:true,time:'3h ago'},
+    {id:4,type:'success',msg:'Course "DSA Masterclass" 45% done!',read:true,time:'1d ago'},
+  ]
+};
+
+const PROBLEMS = [
+  {id:1,title:'Two Sum',difficulty:'Easy',category:'Arrays',tags:['array','hash-map'],acceptance:89,solved:true,xp:50,description:'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.',examples:[{in:'nums = [2,7,11,15], target = 9',out:'[0,1]'},{in:'nums = [3,2,4], target = 6',out:'[1,2]'}],starter:'function twoSum(nums, target) {\n  // Write your solution here\n  \n}'},
+  {id:2,title:'Reverse String',difficulty:'Easy',category:'Strings',tags:['string','two-pointer'],acceptance:94,solved:true,xp:40,description:'Write a function that reverses a string. The input string is given as an array of characters s.\nYou must do this by modifying the input array in-place with O(1) extra memory.',examples:[{in:'s = ["h","e","l","l","o"]',out:'["o","l","l","e","h"]'}],starter:'function reverseString(s) {\n  // Reverse in-place\n  \n}'},
+  {id:3,title:'Valid Parentheses',difficulty:'Easy',category:'Stack',tags:['stack','string'],acceptance:78,solved:true,xp:60,description:'Given a string s containing just the characters \'(\', \')\', \'{\', \'}\', \'[\' and \']\', determine if the input string is valid.',examples:[{in:'s = "()"',out:'true'},{in:'s = "()[]{}"',out:'true'},{in:'s = "(]"',out:'false'}],starter:'function isValid(s) {\n  \n}'},
+  {id:4,title:'Merge Sorted Array',difficulty:'Easy',category:'Arrays',tags:['array','sorting'],acceptance:71,solved:false,xp:55,description:'You are given two integer arrays nums1 and nums2, sorted in non-decreasing order, and two integers m and n, representing the number of elements in nums1 and nums2 respectively.',examples:[{in:'nums1=[1,2,3,0,0,0], m=3, nums2=[2,5,6], n=3',out:'[1,2,2,3,5,6]'}],starter:'function merge(nums1, m, nums2, n) {\n  \n}'},
+  {id:5,title:'Maximum Subarray',difficulty:'Medium',category:'DP',tags:['dynamic-programming','array'],acceptance:62,solved:true,xp:100,description:'Given an integer array nums, find the subarray with the largest sum, and return its sum. This is the classic Kadane\'s Algorithm problem.',examples:[{in:'nums = [-2,1,-3,4,-1,2,1,-5,4]',out:'6'},{in:'nums = [1]',out:'1'}],starter:'function maxSubArray(nums) {\n  \n}'},
+  {id:6,title:'Binary Tree Level Order',difficulty:'Medium',category:'Trees',tags:['tree','bfs','queue'],acceptance:58,solved:false,xp:120,description:'Given the root of a binary tree, return the level order traversal of its nodes\' values (i.e., from left to right, level by level).',examples:[{in:'root = [3,9,20,null,null,15,7]',out:'[[3],[9,20],[15,7]]'}],starter:'function levelOrder(root) {\n  \n}'},
+  {id:7,title:'Climbing Stairs',difficulty:'Easy',category:'DP',tags:['math','dp','memoization'],acceptance:86,solved:true,xp:60,description:'You are climbing a staircase. It takes n steps to reach the top. Each time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?',examples:[{in:'n = 2',out:'2'},{in:'n = 3',out:'3'}],starter:'function climbStairs(n) {\n  \n}'},
+  {id:8,title:'Linked List Cycle',difficulty:'Easy',category:'Linked List',tags:['linked-list','two-pointer','floyd'],acceptance:74,solved:true,xp:70,description:'Given head, the head of a linked list, determine if the linked list has a cycle in it.',examples:[{in:'head = [3,2,0,-4], pos = 1',out:'true'}],starter:'function hasCycle(head) {\n  \n}'},
+  {id:9,title:'Word Search',difficulty:'Medium',category:'Backtracking',tags:['backtracking','dfs','matrix'],acceptance:42,solved:false,xp:150,description:'Given an m x n grid of characters board and a string word, return true if word exists in the grid.',examples:[{in:'board=[["A","B","C","E"],...], word="ABCCED"',out:'true'}],starter:'function exist(board, word) {\n  \n}'},
+  {id:10,title:'LRU Cache',difficulty:'Hard',category:'Design',tags:['hash-map','doubly-linked-list','design'],acceptance:35,solved:false,xp:250,description:'Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.',examples:[{in:'capacity=2, ops=[put(1,1),put(2,2),get(1),put(3,3),get(2)]',out:'[null,null,1,null,-1]'}],starter:'class LRUCache {\n  constructor(capacity) {\n    \n  }\n  get(key) {\n    \n  }\n  put(key, value) {\n    \n  }\n}'},
+  {id:11,title:'Trapping Rain Water',difficulty:'Hard',category:'Arrays',tags:['two-pointer','stack','dp'],acceptance:28,solved:false,xp:300,description:'Given n non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.',examples:[{in:'height = [0,1,0,2,1,0,1,3,2,1,2,1]',out:'6'}],starter:'function trap(height) {\n  \n}'},
+  {id:12,title:'Fibonacci Number',difficulty:'Easy',category:'Math',tags:['math','recursion','dp'],acceptance:92,solved:true,xp:30,description:'The Fibonacci numbers form a sequence where each number is the sum of the two preceding ones, starting from 0 and 1.',examples:[{in:'n = 4',out:'3'},{in:'n = 10',out:'55'}],starter:'function fib(n) {\n  \n}'},
+];
+
+const COURSES = [
+  {id:1,title:'C Programming Masterclass',creator:'Dr. Rajesh Kumar',emoji:'🔤',category:'basics',price:0,rating:4.8,students:12400,duration:'24h',lessons:48,tags:['C','Programming','Basics'],enrolled:true,progress:72,color:'#1a2744'},
+  {id:2,title:'DSA with JavaScript',creator:'Priya Mehta',emoji:'📊',category:'dsa',price:999,rating:4.9,students:8200,duration:'36h',lessons:72,tags:['DSA','JavaScript','Algorithms'],enrolled:true,progress:45,color:'#1a2744'},
+  {id:3,title:'Full Stack Web Dev',creator:'Amit Singh',emoji:'🌐',category:'development',price:1499,rating:4.7,students:15000,duration:'60h',lessons:120,tags:['React','Node','MongoDB'],enrolled:false,progress:0,color:'#1a2744'},
+  {id:4,title:'System Design Interviews',creator:'Neha Patel',emoji:'🏗️',category:'interview',price:799,rating:4.9,students:5100,duration:'20h',lessons:40,tags:['System Design','Architecture'],enrolled:false,progress:0,color:'#1a2744'},
+  {id:5,title:'Python for AI/ML',creator:'Dr. Vijay Rao',emoji:'🤖',category:'ai',price:1299,rating:4.8,students:9800,duration:'42h',lessons:84,tags:['Python','ML','AI'],enrolled:false,progress:0,color:'#1a2744'},
+  {id:6,title:'React Advanced Patterns',creator:'Shreya Gupta',emoji:'⚛️',category:'development',price:699,rating:4.6,students:3400,duration:'18h',lessons:36,tags:['React','Hooks','Performance'],enrolled:true,progress:61,color:'#1a2744'},
+];
+
+const INTERVIEWS = [
+  {id:1,mentor:'Vikram Shah',role:'Sr. SDE @ Google',emoji:'👨‍💻',date:'Feb 25, 2026',time:'10:00 AM',type:'Technical',price:499,rating:4.9,slots:3,expertise:['DSA','System Design','Coding'],available:true},
+  {id:2,mentor:'Ananya Krishnan',role:'Tech Lead @ Microsoft',emoji:'👩‍💻',date:'Feb 26, 2026',time:'3:00 PM',type:'Behavioral',price:299,rating:4.8,slots:2,expertise:['Leadership','Communication','STAR Method'],available:true},
+  {id:3,mentor:'Rahul Desai',role:'Staff Eng @ Amazon',emoji:'🧑‍💻',date:'Feb 27, 2026',time:'11:00 AM',type:'System Design',price:699,rating:5.0,slots:1,expertise:['Distributed Systems','HLD','LLD'],available:true},
+  {id:4,mentor:'Pooja Nair',role:'SDE-II @ Flipkart',emoji:'👩‍🔬',date:'Mar 1, 2026',time:'4:00 PM',type:'Mock Full Interview',price:899,rating:4.7,slots:2,expertise:['Full Stack','DSA','HR'],available:true},
+];
+
+const JOBS = [
+  {id:1,company:'Google',emoji:'🟡',title:'SDE-I',location:'Bangalore',type:'Full-time',salary:'₹30-45 LPA',minScore:80,skills:['DSA','System Design','Python'],posted:'2d ago',applicants:234,match:82},
+  {id:2,company:'Zepto',emoji:'🟣',title:'Frontend Engineer',location:'Mumbai',type:'Full-time',salary:'₹18-28 LPA',minScore:60,skills:['React','JavaScript','CSS'],posted:'1d ago',applicants:89,match:91},
+  {id:3,company:'Razorpay',emoji:'🔵',title:'Backend Developer',location:'Remote',type:'Full-time',salary:'₹22-35 LPA',minScore:65,skills:['Node.js','MongoDB','Redis'],posted:'3d ago',applicants:156,match:74},
+  {id:4,company:'Cred',emoji:'🟢',title:'SDE-2',location:'Bangalore',type:'Full-time',salary:'₹35-55 LPA',minScore:85,skills:['DSA','Java','Microservices'],posted:'5h ago',applicants:67,match:55},
+  {id:5,company:'PhonePe',emoji:'🟠',title:'Fullstack Intern',location:'Pune',type:'Internship',salary:'₹30-50K/mo',minScore:45,skills:['React','Node.js'],posted:'1d ago',applicants:412,match:95},
+  {id:6,company:'Swiggy',emoji:'🔴',title:'Mobile Developer',location:'Hyderabad',type:'Full-time',salary:'₹20-32 LPA',minScore:55,skills:['React Native','JavaScript'],posted:'4d ago',applicants:103,match:68},
+];
+
+const ROADMAP_ITEMS = {
+  basics: {title:'C Language Fundamentals',icon:'🔤',color:'#4ADE80',items:[
+    {id:1,title:'Variables & Data Types',done:true,subtopics:['int, float, char, double','Type casting','Constants']},
+    {id:2,title:'Operators & Expressions',done:true,subtopics:['Arithmetic','Logical','Bitwise']},
+    {id:3,title:'Control Flow',done:true,subtopics:['if-else','switch','loops']},
+    {id:4,title:'Functions & Recursion',done:true,subtopics:['Function declaration','Recursion','Stack']},
+    {id:5,title:'Arrays & Strings',done:true,subtopics:['1D/2D arrays','String functions']},
+    {id:6,title:'Pointers',done:false,subtopics:['Pointer arithmetic','Double pointers','Function pointers']},
+    {id:7,title:'Structures & Unions',done:false,subtopics:['struct','union','typedef']},
+    {id:8,title:'File Handling',done:false,subtopics:['fopen/fclose','fread/fwrite','fprintf']},
+    {id:9,title:'Memory Management',done:false,subtopics:['malloc','calloc','free']},
+  ]},
+  dsa: {title:'Data Structures & Algorithms',icon:'📊',color:'#60A5FA',items:[
+    {id:1,title:'Arrays & Hashing',done:true,subtopics:['Sliding window','Two pointers','Hash maps']},
+    {id:2,title:'Linked Lists',done:true,subtopics:['Singly/Doubly','Floyd\'s cycle','Reversal']},
+    {id:3,title:'Stacks & Queues',done:true,subtopics:['Monotonic stack','Deque','Priority Queue']},
+    {id:4,title:'Trees',done:false,subtopics:['BST','BFS/DFS','Segment Tree']},
+    {id:5,title:'Heaps',done:false,subtopics:['Min/Max heap','K-th largest']},
+    {id:6,title:'Graphs',done:false,subtopics:['Dijkstra','Topological sort','Union Find']},
+    {id:7,title:'Dynamic Programming',done:false,subtopics:['Memoization','Tabulation','LCS','Knapsack']},
+    {id:8,title:'Backtracking',done:false,subtopics:['N-Queens','Sudoku','Permutations']},
+  ]},
+  development: {title:'Web Development',icon:'🌐',color:'#F472B6',items:[
+    {id:1,title:'HTML5 Fundamentals',done:true,subtopics:['Semantic HTML','Forms','Accessibility']},
+    {id:2,title:'CSS3 & Flexbox/Grid',done:true,subtopics:['Flexbox','Grid','Animations','Responsive']},
+    {id:3,title:'JavaScript ES6+',done:true,subtopics:['Promises','Async/Await','Destructuring']},
+    {id:4,title:'React.js',done:true,subtopics:['Hooks','Context','Redux','Router']},
+    {id:5,title:'Node.js & Express',done:false,subtopics:['REST APIs','Middleware','Authentication']},
+    {id:6,title:'MongoDB & Databases',done:false,subtopics:['Mongoose','Aggregation','Indexing']},
+    {id:7,title:'Deployment & DevOps',done:false,subtopics:['Docker','CI/CD','AWS/Vercel']},
+  ]},
+  resume: {title:'Resume & ATS',icon:'📄',color:'#FBBF24',items:[
+    {id:1,title:'Resume Structure',done:true,subtopics:['Format','Sections','Length']},
+    {id:2,title:'Writing Work Experience',done:true,subtopics:['STAR Method','Metrics','Action verbs']},
+    {id:3,title:'Projects Section',done:true,subtopics:['Tech stack','Impact','GitHub links']},
+    {id:4,title:'Skills Optimization',done:true,subtopics:['Keywords','ATS optimization']},
+    {id:5,title:'ATS Score Improvement',done:false,subtopics:['Keyword matching','Formatting tips']},
+    {id:6,title:'LinkedIn Optimization',done:false,subtopics:['Headline','Summary','Skills']},
+  ]},
+  interview: {title:'Interview Practice',icon:'🎤',color:'#A78BFA',items:[
+    {id:1,title:'Behavioral Questions',done:false,subtopics:['STAR Method','Common questions','Practice answers']},
+    {id:2,title:'Technical Interviews',done:false,subtopics:['Coding rounds','Problem solving approach']},
+    {id:3,title:'System Design',done:false,subtopics:['HLD','LLD','Scalability']},
+    {id:4,title:'HR Round',done:false,subtopics:['Salary negotiation','Company research']},
+  ]},
+  jobs: {title:'Job Applications',icon:'💼',color:'#FB923C',items:[
+    {id:1,title:'Job Search Strategy',done:false,subtopics:['Platforms','Referrals','Cold outreach']},
+    {id:2,title:'Application Tracking',done:false,subtopics:['Spreadsheet','Follow-ups']},
+    {id:3,title:'Offer Evaluation',done:false,subtopics:['CTC breakdown','Benefits','Growth']},
+  ]},
+};
+
+// ─── UTILITIES ───────────────────────────────────────────────────────────────
+function ScoreRing({score, size=100, stroke=8, color='#00F5A0'}) {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (score / 100) * circ;
+  return (
+    <div className="score-ring" style={{width:size,height:size}}>
+      <svg width={size} height={size}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke}/>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+          style={{transition:'stroke-dashoffset .8s ease'}}/>
+      </svg>
+      <div className="score-ring-inner">
+        <div className="score-ring-num" style={{fontSize:size*.22,color}}>{score}</div>
+        <div className="score-ring-label" style={{fontSize:size*.09}}>SCORE</div>
+      </div>
+    </div>
+  );
+}
+
+function ProgressBar({value, color='linear-gradient(90deg,#00F5A0,#00C8FF)', height=6}) {
+  return (
+    <div className="progress-bar" style={{height}}>
+      <div className="progress-fill" style={{width:`${value}%`,background:color,height}}/>
+    </div>
+  );
+}
+
+// ─── NOTIFICATION SYSTEM ─────────────────────────────────────────────────────
+function NotifToast({notifs, dismiss}) {
+  return (
+    <div className="notif">
+      {notifs.map(n => (
+        <div key={n.id} className={`notif-item ${n.type}`} onClick={()=>dismiss(n.id)} style={{cursor:'pointer'}}>
+          <span style={{fontSize:18}}>{n.type==='success'?'✅':n.type==='error'?'❌':n.type==='warning'?'⚠️':'ℹ️'}</span>
+          <div>
+            <div style={{fontSize:13,fontWeight:600}}>{n.msg}</div>
+            <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{n.time} · click to dismiss</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+function Sidebar({page, setPage, user}) {
+  const navItems = [
+    {section:'Overview', items:[
+      {id:'dashboard',label:'Dashboard',icon:'🏠'},
+      {id:'leaderboard',label:'Leaderboard',icon:'🏆'},
+    ]},
+    {section:'Learning', items:[
+      {id:'roadmap',label:'Roadmap',icon:'🗺️'},
+      {id:'problems',label:'Problems',icon:'💻'},
+      {id:'courses',label:'Courses',icon:'📚'},
+    ]},
+    {section:'Career', items:[
+      {id:'resume',label:'Resume Builder',icon:'📄'},
+      {id:'interview',label:'Interviews',icon:'🎤'},
+      {id:'jobs',label:'Jobs',icon:'💼'},
+    ]},
+    {section:'AI Tools', items:[
+      {id:'ai',label:'AI Coach',icon:'🤖',badge:true},
+    ]},
+  ];
+
+  return (
+    <div className="sidebar">
+      <div className="sidebar-logo" style={{cursor:'pointer'}} onClick={()=>setPage('landing')}>
+        <div className="logo-mark">⚡</div>
+        <div>
+          <div style={{fontWeight:800,fontSize:15,letterSpacing:'-0.5px'}}>Vibe Coding</div>
+          <div style={{fontSize:10,color:'var(--accent)',fontFamily:'Space Mono',letterSpacing:1}}>BETA v1.0</div>
+        </div>
+      </div>
+      <div className="sidebar-nav">
+        {navItems.map(section => (
+          <div className="nav-section" key={section.section}>
+            <div className="nav-section-label">{section.section}</div>
+            {section.items.map(item => (
+              <div key={item.id} className={`nav-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
+                <span className="icon">{item.icon}</span>
+                {item.label}
+                {item.badge && <span className="badge-count">AI</span>}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{padding:'16px',borderTop:'1px solid var(--border)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div className="avatar" style={{width:36,height:36,background:'linear-gradient(135deg,var(--accent),var(--accent2))',fontSize:13,color:'#000'}}>{user.avatar}</div>
+          <div style={{flex:1,overflow:'hidden'}}>
+            <div style={{fontWeight:700,fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.name}</div>
+            <div style={{fontSize:11,color:'var(--accent)'}}>🔥 {user.streak} day streak</div>
+          </div>
+          <div style={{fontSize:12,color:'var(--text2)'}}>⚡{user.coins}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── TOPBAR ──────────────────────────────────────────────────────────────────
+function Topbar({title, subtitle, user, setPage, unreadCount, showNotifs, setShowNotifs}) {
+  return (
+    <div className="topbar">
+      <div className="topbar-left">
+        <div>
+          <div style={{fontWeight:800,fontSize:16}}>{title}</div>
+          {subtitle && <div style={{fontSize:12,color:'var(--text3)'}}>{subtitle}</div>}
+        </div>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <div style={{position:'relative',cursor:'pointer'}} onClick={()=>setShowNotifs(!showNotifs)}>
+          <span style={{fontSize:20}}>🔔</span>
+          {unreadCount>0 && <div className="notif-dot"/>}
+        </div>
+        <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 12px',fontSize:12,color:'var(--accent)',fontFamily:'Space Mono'}}>
+          🏆 {user.careerScore.overall}/100
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={()=>setPage('landing')}>← Exit</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+function LandingPage({setPage, setIsLoggedIn}) {
+  const [email, setEmail] = useState('');
+  return (
+    <div style={{background:'var(--bg)',minHeight:'100vh'}}>
+      {/* Nav */}
+      <nav style={{position:'fixed',top:0,left:0,right:0,zIndex:100,background:'rgba(8,12,20,.9)',backdropFilter:'blur(20px)',borderBottom:'1px solid var(--border)',padding:'0 40px',height:64,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div className="logo-mark">⚡</div>
+          <span style={{fontWeight:800,fontSize:18,letterSpacing:'-0.5px'}}>Vibe Coding</span>
+        </div>
+        <div style={{display:'flex',gap:24,alignItems:'center'}}>
+          {['Features','Roadmap','Courses','Pricing'].map(l=>(
+            <span key={l} style={{color:'var(--text2)',cursor:'pointer',fontSize:14,fontWeight:600,transition:'color .2s'}} onMouseEnter={e=>e.target.style.color='var(--accent)'} onMouseLeave={e=>e.target.style.color='var(--text2)'}>{l}</span>
+          ))}
+          <button className="btn btn-ghost btn-sm" onClick={()=>setPage('login')}>Login</button>
+          <button className="btn btn-primary btn-sm" onClick={()=>{setIsLoggedIn(true);setPage('dashboard');}}>Get Started Free →</button>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="hero" style={{paddingTop:64}}>
+        <div className="hero-grid"/>
+        <div className="hero-content">
+          <div className="hero-tag">🚀 AI-POWERED EDTECH PLATFORM</div>
+          <h1>Code. Learn.<br/>Get Hired.</h1>
+          <p>The all-in-one platform with AI coaching, DSA roadmaps, mock interviews, resume builder & job matching. Built for Indian developers who mean business.</p>
+          <div className="hero-actions">
+            <button className="btn btn-primary btn-lg" onClick={()=>{setIsLoggedIn(true);setPage('dashboard');}}>Start Learning Free →</button>
+            <button className="btn btn-ghost btn-lg" onClick={()=>setPage('login')}>Sign In</button>
+          </div>
+          <div className="hero-stats">
+            {[['50K+','Students'],['500+','Problems'],['200+','Courses'],['95%','Placement Rate']].map(([n,l])=>(
+              <div className="stat-item" key={l}><div className="stat-num">{n}</div><div className="stat-label">{l}</div></div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section style={{padding:'80px 40px',maxWidth:1200,margin:'0 auto'}}>
+        <div style={{textAlign:'center',marginBottom:48}}>
+          <div className="badge badge-green" style={{marginBottom:12}}>FEATURES</div>
+          <h2 style={{fontSize:40,fontWeight:800,marginBottom:12}}>Everything you need to crack your dream job</h2>
+          <p style={{color:'var(--text2)',fontSize:16,maxWidth:500,margin:'0 auto'}}>From learning to placement — we've got you covered</p>
+        </div>
+        <div className="grid-3" style={{gap:20}}>
+          {[
+            {icon:'🗺️',title:'Structured Roadmaps',desc:'C Language → DSA → Web Dev → Resume → Interview → Jobs. Follow proven paths.'},
+            {icon:'💻',title:'Built-in Code Editor',desc:'Monaco editor with 5 languages. Submit code, get AI feedback, track your score.'},
+            {icon:'🤖',title:'AI Career Coach',desc:'Personalized recommendations, career readiness score, weekly reports.'},
+            {icon:'📄',title:'Resume Builder + ATS',desc:'Build your resume with our editor and get instant ATS score with AI suggestions.'},
+            {icon:'🎤',title:'Mock Interviews',desc:'Book sessions with industry mentors. Get scored by AI. Land that offer.'},
+            {icon:'💼',title:'Smart Job Matching',desc:'Jobs matched to your skill score, roadmap progress, and career readiness.'},
+          ].map(f=>(
+            <div key={f.title} className="feature-card">
+              <div className="feature-icon">{f.icon}</div>
+              <div className="feature-title">{f.title}</div>
+              <div className="feature-desc">{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section style={{padding:'60px 40px',background:'var(--surface)',borderTop:'1px solid var(--border)',borderBottom:'1px solid var(--border)'}}>
+        <div style={{textAlign:'center',marginBottom:40}}>
+          <h2 style={{fontSize:36,fontWeight:800,marginBottom:8}}>Simple Pricing</h2>
+          <p style={{color:'var(--text2)'}}>Start free, upgrade when you're ready</p>
+        </div>
+        <div className="grid-3" style={{maxWidth:900,margin:'0 auto',gap:20}}>
+          {[
+            {name:'Free',price:'₹0',features:['DSA Problems (100+)','Basic Roadmap','Code Editor','Community Access'],cta:'Get Started',variant:'ghost'},
+            {name:'Pro',price:'₹599',sub:'/month',features:['All Free features','All 500+ Problems','AI Code Review','Mock Interview Access','Resume Builder + ATS','Job Board Access','Weekly AI Reports'],cta:'Start Pro',variant:'primary',featured:true},
+            {name:'Team',price:'₹299',sub:'/user/mo',features:['Everything in Pro','Team Leaderboard','Recruiter Access','Analytics Dashboard','Priority Support'],cta:'Contact Us',variant:'ghost'},
+          ].map(p=>(
+            <div key={p.name} className={`price-card ${p.featured?'featured':''}`}>
+              {p.featured && <div className="badge badge-green" style={{marginBottom:12}}>MOST POPULAR</div>}
+              <div style={{fontWeight:800,fontSize:20,marginBottom:8}}>{p.name}</div>
+              <div className="price-amount">{p.price}<span style={{fontSize:16,color:'var(--text2)'}}>{p.sub||''}</span></div>
+              <div style={{margin:'20px 0',borderTop:'1px solid var(--border)'}}/>
+              {p.features.map(f=>(
+                <div key={f} style={{display:'flex',gap:8,alignItems:'center',marginBottom:8,fontSize:13,color:'var(--text2)',textAlign:'left'}}>
+                  <span style={{color:'var(--accent)'}}>✓</span>{f}
+                </div>
+              ))}
+              <button className={`btn btn-${p.variant}`} style={{width:'100%',marginTop:20,justifyContent:'center'}} onClick={()=>{setIsLoggedIn(true);setPage('dashboard');}}>
+                {p.cta} →
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{padding:'40px',textAlign:'center',color:'var(--text3)',borderTop:'1px solid var(--border)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:16}}>
+          <div className="logo-mark" style={{width:28,height:28,fontSize:12}}>⚡</div>
+          <span style={{fontWeight:700}}>Vibe Coding</span>
+        </div>
+        <div style={{fontSize:13}}>© 2026 Vibe Coding. Built with ❤️ for developers.</div>
+      </footer>
+    </div>
+  );
+}
+
+// ─── AUTH PAGES ───────────────────────────────────────────────────────────────
+function AuthPage({type, setPage, setIsLoggedIn}) {
+  const [form, setForm] = useState({name:'',email:'test@vibe.com',password:'demo123',role:'student'});
+  const [loading, setLoading] = useState(false);
+
+  const handle = () => {
+    setLoading(true);
+    setTimeout(()=>{setLoading(false);setIsLoggedIn(true);setPage('dashboard');},1200);
+  };
+
+  return (
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse at 50% 0%,rgba(0,245,160,.05) 0%,transparent 70%)'}}/>
+      <div className="hero-grid" style={{opacity:.3}}/>
+      <div style={{position:'relative',width:'100%',maxWidth:440,padding:20}}>
+        <div style={{textAlign:'center',marginBottom:32}}>
+          <div className="logo-mark" style={{width:48,height:48,fontSize:22,margin:'0 auto 12px'}}>⚡</div>
+          <h1 style={{fontSize:28,fontWeight:800,marginBottom:8}}>{type==='login'?'Welcome back!':'Join Vibe Coding'}</h1>
+          <p style={{color:'var(--text2)',fontSize:14}}>{type==='login'?'Continue your coding journey':'Start your journey to your dream job'}</p>
+        </div>
+        <div className="card" style={{padding:28}}>
+          {type==='register' && (
+            <div style={{marginBottom:16}}>
+              <label>Full Name</label>
+              <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Arjun Sharma"/>
+            </div>
+          )}
+          <div style={{marginBottom:16}}>
+            <label>Email</label>
+            <input value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="you@example.com"/>
+          </div>
+          <div style={{marginBottom:16}}>
+            <label>Password</label>
+            <input type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} placeholder="••••••••"/>
+          </div>
+          {type==='register' && (
+            <div style={{marginBottom:16}}>
+              <label>I am a</label>
+              <select value={form.role} onChange={e=>setForm({...form,role:e.target.value})}>
+                <option value="student">Student / Job Seeker</option>
+                <option value="creator">Content Creator</option>
+                <option value="recruiter">Recruiter / HR</option>
+              </select>
+            </div>
+          )}
+          <button className="btn btn-primary" style={{width:'100%',justifyContent:'center',marginTop:8}} onClick={handle}>
+            {loading ? <span className="loading"/> : (type==='login'?'Sign In →':'Create Account →')}
+          </button>
+          <div style={{textAlign:'center',marginTop:16,fontSize:13,color:'var(--text2)'}}>
+            {type==='login'?'No account?':'Have an account?'}{' '}
+            <span style={{color:'var(--accent)',cursor:'pointer',fontWeight:600}} onClick={()=>setPage(type==='login'?'register':'login')}>
+              {type==='login'?'Sign up free':'Sign in'}
+            </span>
+          </div>
+        </div>
+        <button className="btn btn-ghost btn-sm" style={{margin:'16px auto',display:'block'}} onClick={()=>setPage('landing')}>← Back to Home</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function Dashboard({user, setPage, setActiveProblem}) {
+  const weekDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const activity = [3,1,0,5,2,4,1];
+  const roadmapKeys = Object.keys(user.progress);
+
+  return (
+    <div className="page-content fade-in">
+      {/* Welcome banner */}
+      <div style={{background:'linear-gradient(135deg,rgba(0,245,160,.1) 0%,rgba(0,200,255,.05) 100%)',border:'1px solid rgba(0,245,160,.2)',borderRadius:16,padding:24,marginBottom:24,display:'flex',alignItems:'center',gap:24,flexWrap:'wrap'}}>
+        <div style={{flex:1}}>
+          <div style={{fontSize:22,fontWeight:800,marginBottom:4}}>Good morning, {user.name.split(' ')[0]}! 👋</div>
+          <div style={{color:'var(--text2)',fontSize:14,marginBottom:12}}>You're on a 🔥 {user.streak}-day streak. Keep going!</div>
+          <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+            <div className="badge badge-green">Career Score: {user.careerScore.overall}/100</div>
+            <div className="badge badge-blue">⚡ {user.coins} XP Coins</div>
+            <div className="badge badge-yellow">🔥 {user.streak} Day Streak</div>
+          </div>
+        </div>
+        <ScoreRing score={user.careerScore.overall} size={110}/>
+      </div>
+
+      {/* Stats */}
+      <div className="grid-4" style={{marginBottom:24}}>
+        {[
+          {label:'Problems Solved',val:user.solvedProblems.length,icon:'💻',color:'var(--accent)',delta:'+3 this week'},
+          {label:'Courses Enrolled',val:4,icon:'📚',color:'var(--accent2)',delta:'2 in progress'},
+          {label:'Roadmap Progress',val:`${Math.round(Object.values(user.progress).reduce((a,b)=>a+b,0)/Object.values(user.progress).length)}%`,icon:'🗺️',color:'#F472B6',delta:'Overall avg'},
+          {label:'Interview Readiness',val:user.careerScore.overall>=75?'Ready! ✅':'Not Yet',icon:'🎤',color:user.careerScore.overall>=75?'var(--accent)':'var(--accent4)',delta:`Need ${Math.max(0,75-user.careerScore.overall)} more points`},
+        ].map(s=>(
+          <div key={s.label} className="card" style={{padding:20}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+              <div style={{fontSize:28}}>{s.icon}</div>
+              <span style={{fontSize:10,color:'var(--text3)',background:'var(--surface2)',padding:'2px 8px',borderRadius:4}}>{s.delta}</span>
+            </div>
+            <div style={{fontSize:28,fontWeight:800,color:s.color,fontFamily:'Space Mono',marginBottom:4}}>{s.val}</div>
+            <div style={{fontSize:12,color:'var(--text2)'}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid-2" style={{marginBottom:24}}>
+        {/* Roadmap Progress */}
+        <div className="card" style={{padding:20}}>
+          <div className="section-header">
+            <div className="section-title">Roadmap Progress</div>
+            <button className="btn btn-ghost btn-sm" onClick={()=>setPage('roadmap')}>View All →</button>
+          </div>
+          {roadmapKeys.map(k=>{
+            const r = ROADMAP_ITEMS[k];
+            const colors = {basics:'#4ADE80',dsa:'#60A5FA',development:'#F472B6',resume:'#FBBF24',interview:'#A78BFA',jobs:'#FB923C'};
+            return (
+              <div key={k} style={{marginBottom:14}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                  <span style={{fontSize:13,fontWeight:600}}>{r.icon} {r.title}</span>
+                  <span style={{fontSize:12,fontFamily:'Space Mono',color:colors[k]}}>{user.progress[k]}%</span>
+                </div>
+                <ProgressBar value={user.progress[k]} color={`linear-gradient(90deg,${colors[k]},${colors[k]}88)`}/>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Career Score Breakdown */}
+        <div className="card" style={{padding:20}}>
+          <div className="section-header">
+            <div className="section-title">Career Score Breakdown</div>
+            <button className="btn btn-ghost btn-sm" onClick={()=>setPage('ai')}>AI Coach →</button>
+          </div>
+          {Object.entries(user.careerScore).filter(([k])=>k!=='overall').map(([k,v])=>{
+            const labels={coding:'💻 Coding',dsa:'📊 DSA',consistency:'🔥 Consistency',resume:'📄 Resume',interview:'🎤 Interview',projects:'🏗️ Projects'};
+            const colors={coding:'#00F5A0',dsa:'#60A5FA',consistency:'#FBBF24',resume:'#F472B6',interview:'#A78BFA',projects:'#FB923C'};
+            return (
+              <div key={k} style={{marginBottom:12}}>
+                <div className="skill-bar-label">
+                  <span style={{fontSize:12}}>{labels[k]||k}</span>
+                  <span style={{fontSize:12,fontFamily:'Space Mono',color:colors[k]}}>{v}/100</span>
+                </div>
+                <div className="skill-bar">
+                  <div className="skill-fill" style={{width:`${v}%`,background:`linear-gradient(90deg,${colors[k]},${colors[k]}88)`}}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid-2" style={{marginBottom:24}}>
+        {/* Activity Chart */}
+        <div className="card" style={{padding:20}}>
+          <div className="section-header"><div className="section-title">Weekly Activity</div></div>
+          <div className="bar-chart">
+            {weekDays.map((d,i)=>(
+              <div key={d} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+                <div className="bar" style={{width:'100%',height:`${(activity[i]/5)*100}px`,background:activity[i]>3?'linear-gradient(180deg,var(--accent),rgba(0,245,160,.3))':'linear-gradient(180deg,#60A5FA,rgba(96,165,250,.3))'}}/>
+                <div style={{fontSize:10,color:'var(--text3)'}}>{d}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{textAlign:'center',marginTop:8,fontSize:12,color:'var(--text2)'}}>16 problems solved this week 🔥</div>
+        </div>
+
+        {/* Recent Problems */}
+        <div className="card" style={{padding:20}}>
+          <div className="section-header">
+            <div className="section-title">Continue Solving</div>
+            <button className="btn btn-ghost btn-sm" onClick={()=>setPage('problems')}>All Problems →</button>
+          </div>
+          {PROBLEMS.filter(p=>!p.solved).slice(0,4).map(p=>(
+            <div key={p.id} className="problem-row" onClick={()=>{setActiveProblem(p);setPage('editor');}}>
+              <span style={{fontSize:14}}>{p.difficulty==='Easy'?'🟢':p.difficulty==='Medium'?'🟡':'🔴'}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:600}}>{p.title}</div>
+                <div style={{fontSize:11,color:'var(--text2)'}}>{p.category}</div>
+              </div>
+              <span className={`badge badge-${p.difficulty==='Easy'?'green':p.difficulty==='Medium'?'yellow':'red'}`}>{p.difficulty}</span>
+              <span style={{fontSize:11,color:'var(--accent)',fontFamily:'Space Mono'}}>+{p.xp}XP</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* AI Recommendations */}
+      <div className="card" style={{padding:20}}>
+        <div className="section-header">
+          <div className="section-title">🤖 AI Recommendations</div>
+          <div className="badge badge-green" style={{animation:'pulse 2s infinite'}}>LIVE</div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
+          {[
+            {icon:'📊',title:'Boost your DSA score',desc:'You\'re at 58% DSA. Solve 5 tree problems to jump to 70%.', action:'Practice Trees', page:'problems'},
+            {icon:'📄',title:'Resume needs work',desc:'ATS score 54/100. Add more quantified achievements to increase by 20 points.', action:'Edit Resume', page:'resume'},
+            {icon:'🎤',title:'Book a mock interview',desc:'Career score 67. One good mock interview can push you to interview-ready (75+).', action:'Book Now', page:'interview'},
+          ].map((r,i)=>(
+            <div key={i} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:12,padding:16}}>
+              <div style={{fontSize:24,marginBottom:8}}>{r.icon}</div>
+              <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>{r.title}</div>
+              <div style={{fontSize:12,color:'var(--text2)',marginBottom:12,lineHeight:1.5}}>{r.desc}</div>
+              <button className="btn btn-secondary btn-sm" onClick={()=>setPage(r.page)}>{r.action} →</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PROBLEMS PAGE ────────────────────────────────────────────────────────────
+function ProblemsPage({user, setPage, setActiveProblem}) {
+  const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [diff, setDiff] = useState('all');
+
+  const filtered = PROBLEMS.filter(p=>{
+    if(search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if(diff!=='all' && p.difficulty!==diff) return false;
+    if(filter==='solved' && !p.solved) return false;
+    if(filter==='unsolved' && p.solved) return false;
+    return true;
+  });
+
+  const stats = {total:PROBLEMS.length, solved:PROBLEMS.filter(p=>p.solved).length, easy:PROBLEMS.filter(p=>p.difficulty==='Easy'&&p.solved).length, medium:PROBLEMS.filter(p=>p.difficulty==='Medium'&&p.solved).length, hard:PROBLEMS.filter(p=>p.difficulty==='Hard'&&p.solved).length};
+
+  return (
+    <div className="page-content fade-in">
+      {/* Stats */}
+      <div className="grid-4" style={{marginBottom:24}}>
+        {[
+          {label:'Total Solved',val:`${stats.solved}/${stats.total}`,color:'var(--accent)'},
+          {label:'Easy',val:`${stats.easy}/${PROBLEMS.filter(p=>p.difficulty==='Easy').length}`,color:'#4ADE80'},
+          {label:'Medium',val:`${stats.medium}/${PROBLEMS.filter(p=>p.difficulty==='Medium').length}`,color:'var(--accent4)'},
+          {label:'Hard',val:`${stats.hard}/${PROBLEMS.filter(p=>p.difficulty==='Hard').length}`,color:'var(--accent3)'},
+        ].map(s=>(
+          <div key={s.label} className="card" style={{padding:16,textAlign:'center'}}>
+            <div style={{fontSize:24,fontWeight:800,color:s.color,fontFamily:'Space Mono'}}>{s.val}</div>
+            <div style={{fontSize:12,color:'var(--text2)',marginTop:4}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div style={{display:'flex',gap:12,marginBottom:20,flexWrap:'wrap'}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search problems..." style={{flex:1,minWidth:200}}/>
+        <select value={diff} onChange={e=>setDiff(e.target.value)} style={{width:130}}>
+          <option value="all">All Levels</option>
+          <option value="Easy">Easy</option>
+          <option value="Medium">Medium</option>
+          <option value="Hard">Hard</option>
+        </select>
+        <div style={{display:'flex',gap:4}}>
+          {['all','solved','unsolved'].map(f=>(
+            <button key={f} className={`btn btn-sm ${filter===f?'btn-primary':'btn-ghost'}`} onClick={()=>setFilter(f)}>{f.charAt(0).toUpperCase()+f.slice(1)}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Problem List */}
+      <div className="card" style={{overflow:'hidden'}}>
+        <div style={{display:'grid',gridTemplateColumns:'40px 1fr 100px 100px 80px 80px',gap:12,padding:'12px 16px',borderBottom:'1px solid var(--border)',fontSize:11,color:'var(--text3)',fontWeight:700,letterSpacing:1,textTransform:'uppercase'}}>
+          <div>#</div><div>Title</div><div>Category</div><div>Difficulty</div><div>Acceptance</div><div>XP</div>
+        </div>
+        {filtered.map(p=>(
+          <div key={p.id} style={{display:'grid',gridTemplateColumns:'40px 1fr 100px 100px 80px 80px',gap:12,padding:'14px 16px',borderBottom:'1px solid var(--border)',alignItems:'center',cursor:'pointer',transition:'background .2s',background:p.solved?'rgba(0,245,160,.02)':''}}
+            onClick={()=>{setActiveProblem(p);setPage('editor');}}
+            onMouseEnter={e=>e.currentTarget.style.background='var(--surface2)'}
+            onMouseLeave={e=>e.currentTarget.style.background=p.solved?'rgba(0,245,160,.02)':''}>
+            <div style={{fontSize:11,color:'var(--text3)',fontFamily:'Space Mono'}}>#{p.id.toString().padStart(3,'0')}</div>
+            <div>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <span style={{color:p.solved?'var(--accent)':'var(--text)'}}>{p.solved?'✅ ':''}{p.title}</span>
+              </div>
+              <div style={{display:'flex',gap:4,marginTop:4}}>
+                {p.tags.slice(0,2).map(t=><span key={t} className="tag">{t}</span>)}
+              </div>
+            </div>
+            <div style={{fontSize:12,color:'var(--text2)'}}>{p.category}</div>
+            <span className={`badge badge-${p.difficulty==='Easy'?'green':p.difficulty==='Medium'?'yellow':'red'}`}>{p.difficulty}</span>
+            <div style={{fontSize:12,color:'var(--text2)',fontFamily:'Space Mono'}}>{p.acceptance}%</div>
+            <div style={{fontSize:12,color:'var(--accent)',fontFamily:'Space Mono'}}>+{p.xp}XP</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── CODE EDITOR ──────────────────────────────────────────────────────────────
+function EditorPage({problem, user, addNotif, updateUser}) {
+  const [code, setCode] = useState(problem?.starter || '// Write your solution here\n');
+  const [lang, setLang] = useState('javascript');
+  const [output, setOutput] = useState(null);
+  const [running, setRunning] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('tests');
+  const [aiFeedback, setAiFeedback] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  if(!problem) return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'50vh',flexDirection:'column',gap:16}}>
+      <div style={{fontSize:48}}>💻</div>
+      <div style={{fontWeight:700,fontSize:18}}>No problem selected</div>
+      <div style={{color:'var(--text2)'}}>Go to Problems page and select one</div>
+    </div>
+  );
+
+  const runCode = () => {
+    setRunning(true);
+    setOutput(null);
+    setTimeout(()=>{
+      setOutput({type:'run',results:[
+        {input:problem.examples[0]?.in,expected:problem.examples[0]?.out,got:problem.examples[0]?.out,passed:true,time:'12ms'},
+        problem.examples[1] ? {input:problem.examples[1].in,expected:problem.examples[1].out,got:problem.examples[1].out,passed:true,time:'8ms'} : null,
+      ].filter(Boolean)});
+      setRunning(false);
+      setActiveTab('output');
+    }, 1400);
+  };
+
+  const submitCode = () => {
+    if(submitted) return;
+    setSubmitting(true);
+    setTimeout(()=>{
+      const accepted = code.length > 30;
+      setOutput({type:'submit',accepted,testsPassed:accepted?problem.examples.length:1,total:problem.examples.length,runtime:'18ms',memory:'42MB'});
+      setAiFeedback({score:accepted?82:34,feedback:accepted?'Good solution! Consider using a hash map for O(n) time complexity. Your current approach is clean and readable. Edge cases handled well.':'Code looks incomplete. Make sure to handle the return statement and all edge cases.',suggestion:'Try: const map = {}; for(let i=0;i<nums.length;i++){ const comp = target-nums[i]; if(map[comp]!==undefined) return [map[comp],i]; map[nums[i]]=i; }'});
+      setSubmitting(false);
+      setActiveTab('output');
+      if(accepted) {
+        setSubmitted(true);
+        addNotif({type:'success',msg:`✅ Accepted! +${problem.xp} XP earned!`,time:'now'});
+      }
+    }, 2500);
+  };
+
+  const lineNums = code.split('\n').map((_,i)=>i+1).join('\n');
+
+  return (
+    <div className="editor-layout fade-in">
+      {/* Problem Description */}
+      <div className="editor-panel" style={{borderRight:'1px solid var(--border)'}}>
+        <div style={{display:'flex',gap:8,marginBottom:16}}>
+          <span className={`badge badge-${problem.difficulty==='Easy'?'green':problem.difficulty==='Medium'?'yellow':'red'}`}>{problem.difficulty}</span>
+          {problem.tags.map(t=><span key={t} className="tag">{t}</span>)}
+        </div>
+        <h2 style={{fontSize:18,fontWeight:800,marginBottom:12}}>{problem.title}</h2>
+        <div style={{fontSize:13,color:'var(--text2)',lineHeight:1.8,marginBottom:20,whiteSpace:'pre-line'}}>{problem.description}</div>
+
+        {problem.examples.map((ex,i)=>(
+          <div key={i} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:14,marginBottom:10}}>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text3)',marginBottom:6,textTransform:'uppercase',letterSpacing:1}}>Example {i+1}</div>
+            <div style={{fontFamily:'JetBrains Mono',fontSize:12,color:'var(--text)'}}>
+              <div style={{marginBottom:4}}><span style={{color:'var(--text3)'}}>Input: </span>{ex.in}</div>
+              <div><span style={{color:'var(--text3)'}}>Output: </span>{ex.out}</div>
+            </div>
+          </div>
+        ))}
+
+        <div className="divider"/>
+        <div style={{fontSize:13,color:'var(--text2)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
+            <span>Acceptance Rate</span>
+            <span style={{color:'var(--accent)',fontFamily:'Space Mono'}}>{problem.acceptance}%</span>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between'}}>
+            <span>XP Reward</span>
+            <span style={{color:'var(--accent4)',fontFamily:'Space Mono'}}>+{problem.xp} XP</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Code Editor */}
+      <div className="editor-panel" style={{display:'flex',flexDirection:'column',padding:0}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px',borderBottom:'1px solid var(--border)',background:'var(--surface)'}}>
+          <select value={lang} onChange={e=>setLang(e.target.value)} style={{width:130,padding:'6px 10px',fontSize:12}}>
+            {['javascript','python','c','cpp','java'].map(l=><option key={l} value={l}>{l}</option>)}
+          </select>
+          <div style={{display:'flex',gap:8}}>
+            <button className="btn btn-ghost btn-sm" onClick={()=>setCode(problem.starter)}>Reset</button>
+            <button className="btn btn-blue btn-sm" onClick={runCode} disabled={running}>
+              {running?<><span className="loading"/> Running...</>:'▶ Run'}
+            </button>
+            <button className={`btn btn-sm ${submitted?'btn-ghost':'btn-primary'}`} onClick={submitCode} disabled={submitting||submitted}>
+              {submitting?<><span className="loading"/> Submitting...</>:submitted?'✅ Submitted':'Submit'}
+            </button>
+          </div>
+        </div>
+        <div style={{flex:1,display:'flex',overflow:'hidden',background:'#060A12'}}>
+          <div style={{padding:'16px 6px 16px 12px',color:'var(--text3)',fontFamily:'JetBrains Mono',fontSize:13,lineHeight:1.6,textAlign:'right',userSelect:'none',whiteSpace:'pre',borderRight:'1px solid var(--border)',minWidth:40}}>
+            {code.split('\n').map((_,i)=>i+1).join('\n')}
+          </div>
+          <textarea className="code-area" style={{flex:1,border:'none',borderRadius:0,resize:'none',padding:'16px'}}
+            value={code} onChange={e=>setCode(e.target.value)} spellCheck={false}/>
+        </div>
+      </div>
+
+      {/* Results Panel */}
+      <div className="editor-panel">
+        <div className="tabs" style={{marginBottom:16}}>
+          {['tests','output','ai'].map(t=>(
+            <div key={t} className={`tab ${activeTab===t?'active':''}`} onClick={()=>setActiveTab(t)}>
+              {t==='tests'?'Test Cases':t==='output'?'Output':'🤖 AI Review'}
+            </div>
+          ))}
+        </div>
+
+        {activeTab==='tests' && (
+          <div>
+            {problem.examples.map((ex,i)=>(
+              <div key={i} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:14,marginBottom:10}}>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--text3)',marginBottom:8}}>TESTCASE {i+1}</div>
+                <div style={{fontFamily:'JetBrains Mono',fontSize:12}}>
+                  <div style={{color:'var(--text3)',marginBottom:4}}>Input</div>
+                  <div style={{background:'var(--bg)',padding:8,borderRadius:6,marginBottom:8,color:'var(--text)'}}>{ex.in}</div>
+                  <div style={{color:'var(--text3)',marginBottom:4}}>Expected Output</div>
+                  <div style={{background:'var(--bg)',padding:8,borderRadius:6,color:'var(--accent)'}}>{ex.out}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab==='output' && !output && (
+          <div style={{textAlign:'center',padding:40,color:'var(--text3)'}}>
+            <div style={{fontSize:40,marginBottom:12}}>▶</div>
+            <div>Run or submit your code to see results</div>
+          </div>
+        )}
+
+        {activeTab==='output' && output && (
+          <div>
+            {output.type==='submit' && (
+              <div style={{background:output.accepted?'rgba(0,245,160,.1)':'rgba(255,107,107,.1)',border:`1px solid ${output.accepted?'rgba(0,245,160,.3)':'rgba(255,107,107,.3)'}`,borderRadius:12,padding:16,marginBottom:16,textAlign:'center'}}>
+                <div style={{fontSize:24,marginBottom:6}}>{output.accepted?'🎉':'💀'}</div>
+                <div style={{fontSize:18,fontWeight:800,color:output.accepted?'var(--accent)':'var(--accent3)'}}>{output.accepted?'Accepted!':'Wrong Answer'}</div>
+                <div style={{fontSize:12,color:'var(--text2)',marginTop:4}}>{output.testsPassed}/{output.total} test cases passed</div>
+                {output.accepted && <div style={{fontSize:12,color:'var(--accent4)',marginTop:8}}>Runtime: {output.runtime} · Memory: {output.memory}</div>}
+              </div>
+            )}
+            {output.results?.map((r,i)=>(
+              <div key={i} style={{background:r.passed?'rgba(0,245,160,.05)':'rgba(255,107,107,.05)',border:`1px solid ${r.passed?'rgba(0,245,160,.2)':'rgba(255,107,107,.2)'}`,borderRadius:8,padding:14,marginBottom:8}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
+                  <span style={{fontWeight:700,fontSize:13,color:r.passed?'var(--accent)':'var(--accent3)'}}>{r.passed?'✅ Passed':'❌ Failed'}</span>
+                  <span style={{fontSize:11,color:'var(--text3)',fontFamily:'Space Mono'}}>{r.time}</span>
+                </div>
+                <div style={{fontFamily:'JetBrains Mono',fontSize:11,color:'var(--text2)'}}>
+                  <div>Input: {r.input}</div>
+                  <div style={{color:r.passed?'var(--accent)':'var(--accent3)'}}>Got: {r.got}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab==='ai' && !aiFeedback && (
+          <div style={{textAlign:'center',padding:40,color:'var(--text3)'}}>
+            <div style={{fontSize:40,marginBottom:12}}>🤖</div>
+            <div>Submit your code to get AI feedback</div>
+          </div>
+        )}
+
+        {activeTab==='ai' && aiFeedback && (
+          <div>
+            <div style={{textAlign:'center',marginBottom:16}}>
+              <ScoreRing score={aiFeedback.score} size={90} color={aiFeedback.score>60?'var(--accent)':'var(--accent3)'}/>
+              <div style={{fontSize:13,fontWeight:700,marginTop:8}}>AI Code Quality Score</div>
+            </div>
+            <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:14,marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:700,color:'var(--text3)',marginBottom:6}}>FEEDBACK</div>
+              <div style={{fontSize:13,lineHeight:1.6,color:'var(--text2)'}}>{aiFeedback.feedback}</div>
+            </div>
+            <div style={{background:'rgba(0,200,255,.05)',border:'1px solid rgba(0,200,255,.2)',borderRadius:8,padding:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:'var(--accent2)',marginBottom:6}}>💡 SUGGESTED APPROACH</div>
+              <div style={{fontFamily:'JetBrains Mono',fontSize:11,color:'var(--text2)',lineHeight:1.6}}>{aiFeedback.suggestion}</div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── ROADMAP PAGE ─────────────────────────────────────────────────────────────
+function RoadmapPage({user, setPage, updateUser}) {
+  const [active, setActive] = useState(null);
+  const colors = {basics:'#4ADE80',dsa:'#60A5FA',development:'#F472B6',resume:'#FBBF24',interview:'#A78BFA',jobs:'#FB923C'};
+
+  const toggleItem = (cat, itemId) => {
+    // demo toggle
+    updateUser(u => {
+      const r = ROADMAP_ITEMS[cat];
+      const done = r.items.find(i=>i.id===itemId)?.done;
+      r.items = r.items.map(i=>i.id===itemId?{...i,done:!done}:i);
+      const pct = Math.round(r.items.filter(i=>i.done).length/r.items.length*100);
+      return {...u, progress:{...u.progress,[cat]:pct}};
+    });
+  };
+
+  if(active) {
+    const r = ROADMAP_ITEMS[active];
+    const c = colors[active];
+    const donePct = Math.round(r.items.filter(i=>i.done).length/r.items.length*100);
+    return (
+      <div className="page-content fade-in">
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:24}}>
+          <button className="btn btn-ghost btn-sm" onClick={()=>setActive(null)}>← Back</button>
+          <div style={{fontSize:28}}>{r.icon}</div>
+          <div>
+            <div style={{fontSize:22,fontWeight:800}}>{r.title}</div>
+            <div style={{fontSize:13,color:'var(--text2)'}}>{r.items.filter(i=>i.done).length}/{r.items.length} topics completed</div>
+          </div>
+          <div style={{marginLeft:'auto'}}>
+            <ScoreRing score={donePct} size={70} color={c}/>
+          </div>
+        </div>
+        <ProgressBar value={donePct} color={`linear-gradient(90deg,${c},${c}88)`} height={8}/>
+        <div style={{marginTop:24}}>
+          {r.items.map(item=>(
+            <div key={item.id} className="card" style={{padding:16,marginBottom:10,borderLeft:`3px solid ${item.done?c:'var(--border)'}`}}>
+              <div style={{display:'flex',alignItems:'flex-start',gap:12}}>
+                <div className={`checkbox ${item.done?'checked':''}`} onClick={()=>toggleItem(active,item.id)} style={{marginTop:2}}>
+                  {item.done && <span style={{color:'#000',fontSize:12}}>✓</span>}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:14,marginBottom:8,textDecoration:item.done?'line-through':'none',color:item.done?'var(--text3)':'var(--text)'}}>{item.title}</div>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                    {item.subtopics.map(s=>(
+                      <span key={s} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:6,padding:'2px 10px',fontSize:11,color:'var(--text2)'}}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+                <span style={{fontSize:11,color:item.done?c:'var(--text3)',fontWeight:700}}>{item.done?'✅ Done':'Pending'}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-content fade-in">
+      <div className="section-header">
+        <div>
+          <div className="section-title">Learning Roadmap</div>
+          <div style={{fontSize:13,color:'var(--text2)',marginTop:4}}>Follow the path from beginner to placement-ready</div>
+        </div>
+      </div>
+
+      {/* Overall progress */}
+      <div className="card" style={{padding:20,marginBottom:24,background:'linear-gradient(135deg,rgba(0,245,160,.05),rgba(0,200,255,.03))'}}>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}>
+          <div style={{fontWeight:700}}>Overall Progress</div>
+          <div style={{fontFamily:'Space Mono',color:'var(--accent)'}}>{Math.round(Object.values(user.progress).reduce((a,b)=>a+b,0)/Object.keys(user.progress).length)}%</div>
+        </div>
+        <ProgressBar value={Math.round(Object.values(user.progress).reduce((a,b)=>a+b,0)/Object.keys(user.progress).length)} height={10}/>
+      </div>
+
+      <div className="grid-3">
+        {Object.entries(ROADMAP_ITEMS).map(([key, r])=>{
+          const c = colors[key];
+          const done = r.items.filter(i=>i.done).length;
+          return (
+            <div key={key} className="card roadmap-card" onClick={()=>setActive(key)} style={{borderTop:`3px solid ${c}`}}>
+              <div className="roadmap-card-icon">{r.icon}</div>
+              <div className="roadmap-card-title">{r.title}</div>
+              <div className="roadmap-card-desc">{r.items.length} topics · {done} completed</div>
+              <ProgressBar value={user.progress[key]} color={`linear-gradient(90deg,${c},${c}88)`}/>
+              <div style={{display:'flex',justifyContent:'space-between',marginTop:10,fontSize:12}}>
+                <span style={{color:'var(--text3)'}}>{r.items.filter(i=>i.done).length}/{r.items.length} done</span>
+                <span style={{color:c,fontFamily:'Space Mono',fontWeight:700}}>{user.progress[key]}%</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── COURSES PAGE ─────────────────────────────────────────────────────────────
+function CoursesPage({user, addNotif}) {
+  const [tab, setTab] = useState('all');
+  const [watching, setWatching] = useState(null);
+  const [enrolledIds, setEnrolledIds] = useState([1,2,6]);
+
+  const displayed = COURSES.filter(c=>tab==='enrolled'?enrolledIds.includes(c.id):true);
+
+  if(watching) {
+    const c = COURSES.find(x=>x.id===watching);
+    return (
+      <div className="page-content fade-in">
+        <button className="btn btn-ghost btn-sm" onClick={()=>setWatching(null)} style={{marginBottom:20}}>← Back to Courses</button>
+        <div className="grid-2" style={{gap:24,alignItems:'start'}}>
+          <div>
+            <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:12,aspectRatio:'16/9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:72,marginBottom:16}}>
+              {c.emoji}
+            </div>
+            <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,padding:20}}>
+              <div style={{fontSize:11,fontWeight:700,color:'var(--text3)',marginBottom:8}}>COURSE OVERVIEW</div>
+              <div style={{fontSize:16,fontWeight:800,marginBottom:8}}>{c.title}</div>
+              <div style={{fontSize:13,color:'var(--text2)',marginBottom:16}}>by {c.creator} · ⭐ {c.rating} · 👥 {c.students.toLocaleString()} students</div>
+              <ProgressBar value={enrolledIds.includes(c.id)?c.progress:0}/>
+              <div style={{fontSize:12,color:'var(--text2)',marginTop:6}}>{enrolledIds.includes(c.id)?c.progress:0}% complete · {c.duration} total</div>
+            </div>
+          </div>
+          <div className="card" style={{overflow:'hidden'}}>
+            <div style={{padding:'16px',borderBottom:'1px solid var(--border)',fontWeight:700}}>Course Content · {c.lessons} Lessons</div>
+            {[...Array(6)].map((_,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:'1px solid rgba(30,45,74,.5)',cursor:'pointer',transition:'background .2s'}} onMouseEnter={e=>e.currentTarget.style.background='var(--surface2)'} onMouseLeave={e=>e.currentTarget.style.background=''}>
+                <div style={{width:28,height:28,borderRadius:'50%',background:i<3?'var(--accent)':'var(--border)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:i<3?'#000':'var(--text3)',fontWeight:700}}>{i<3?'✓':i+1}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:600}}>Section {i+1}: {['Introduction','Core Concepts','Practice Problems','Advanced Topics','Projects','Final Assessment'][i]}</div>
+                  <div style={{fontSize:11,color:'var(--text3)'}}>{Math.floor(Math.random()*8)+3} videos · {Math.floor(Math.random()*30)+20}min</div>
+                </div>
+                {i<3 && <span className="badge badge-green">✓</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-content fade-in">
+      <div className="section-header">
+        <div className="section-title">Courses</div>
+        <div style={{display:'flex',gap:8}}>
+          {['all','enrolled'].map(t=><button key={t} className={`btn btn-sm ${tab===t?'btn-primary':'btn-ghost'}`} onClick={()=>setTab(t)}>{t==='all'?'All Courses':'My Courses'}</button>)}
+        </div>
+      </div>
+      <div className="grid-3">
+        {displayed.map(c=>(
+          <div key={c.id} className="card course-card" style={{padding:20,cursor:'pointer'}} onClick={()=>setWatching(c.id)}>
+            <div className="course-thumb" style={{background:'linear-gradient(135deg,var(--surface2),var(--bg))'}}>{c.emoji}</div>
+            <div className="course-meta">
+              <span className="badge badge-gray">{c.category}</span>
+              {c.price===0?<span className="badge badge-green">FREE</span>:<span className="badge badge-blue">₹{c.price}</span>}
+            </div>
+            <div style={{fontWeight:800,fontSize:15,marginBottom:6,lineHeight:1.3}}>{c.title}</div>
+            <div style={{fontSize:12,color:'var(--text2)',marginBottom:12}}>by {c.creator}</div>
+            <div style={{display:'flex',gap:12,fontSize:12,color:'var(--text2)',marginBottom:12}}>
+              <span>⭐ {c.rating}</span><span>👥 {c.students.toLocaleString()}</span><span>⏱ {c.duration}</span><span>📹 {c.lessons} lessons</span>
+            </div>
+            {enrolledIds.includes(c.id) ? (
+              <>
+                <ProgressBar value={c.progress}/>
+                <div style={{fontSize:11,color:'var(--text2)',marginTop:6}}>{c.progress}% complete</div>
+                <button className="btn btn-primary btn-sm" style={{marginTop:10,width:'100%',justifyContent:'center'}}>Continue →</button>
+              </>
+            ) : (
+              <button className="btn btn-secondary btn-sm" style={{width:'100%',justifyContent:'center'}} onClick={e=>{e.stopPropagation();setEnrolledIds([...enrolledIds,c.id]);addNotif({type:'success',msg:`Enrolled in "${c.title}"!`,time:'now'});}}>
+                {c.price===0?'Enroll Free':'Enroll Now'}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── RESUME BUILDER ───────────────────────────────────────────────────────────
+function ResumePage({user, addNotif}) {
+  const [resumeData, setResumeData] = useState({
+    name: user.name, title:'Full Stack Developer | DSA Enthusiast',
+    email: user.email, phone:'+91 98765 43210', location:'Bangalore, India',
+    linkedin:'linkedin.com/in/arjun', github:'github.com/arjun',
+    summary:'Passionate full-stack developer with 2 years of experience building scalable web applications. Strong DSA fundamentals with 200+ LeetCode problems solved.',
+    experience:[
+      {company:'TechStartup Pvt Ltd',role:'SDE Intern',duration:'June 2025 - Dec 2025',points:['Built REST APIs with Node.js & Express serving 10K+ daily users','Reduced DB query time by 40% using MongoDB aggregation pipelines','Implemented JWT auth system with role-based access control']},
+    ],
+    projects:[
+      {name:'E-commerce Platform',tech:'React, Node.js, MongoDB',desc:'Full-stack e-commerce with 50+ products, cart, payments via Razorpay'},
+      {name:'DSA Visualizer',tech:'JavaScript, D3.js',desc:'Interactive algorithm visualization tool with 20+ algorithms'},
+    ],
+    education:{college:'VIT University',degree:'B.Tech Computer Science',year:'2022-2026',cgpa:'8.6'},
+    skills:['C/C++','JavaScript','Python','React.js','Node.js','MongoDB','Git','DSA'],
+  });
+  const [atsScore, setAtsScore] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [activeSection, setActiveSection] = useState('basic');
+
+  const analyzeATS = () => {
+    setAnalyzing(true);
+    setTimeout(()=>{
+      setAtsScore({score:76,breakdown:{keywords:82,formatting:90,sections:85,quantification:58,length:95},suggestions:['Add more quantified achievements (e.g., "Increased performance by X%")','Include relevant keywords: Docker, AWS, CI/CD','Add a dedicated Skills section at the top','Ensure consistent date formatting throughout','Add GitHub project links with live demos']});
+      setAnalyzing(false);
+      addNotif({type:'info',msg:'✅ ATS analysis complete! Score: 76/100',time:'now'});
+    }, 2000);
+  };
+
+  return (
+    <div className="page-content fade-in">
+      <div className="section-header">
+        <div className="section-title">Resume Builder + ATS Checker</div>
+        <div style={{display:'flex',gap:8}}>
+          <button className="btn btn-ghost btn-sm" onClick={analyzeATS} disabled={analyzing}>
+            {analyzing?<><span className="loading"/> Analyzing...</>:'🤖 Check ATS Score'}
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={()=>addNotif({type:'success',msg:'Resume downloaded!',time:'now'})}>⬇ Download PDF</button>
+        </div>
+      </div>
+
+      <div className="grid-2" style={{gap:20,alignItems:'start'}}>
+        {/* Editor */}
+        <div>
+          <div className="tabs" style={{marginBottom:16}}>
+            {['basic','experience','projects','skills'].map(s=>(
+              <div key={s} className={`tab ${activeSection===s?'active':''}`} onClick={()=>setActiveSection(s)} style={{fontSize:12}}>
+                {s.charAt(0).toUpperCase()+s.slice(1)}
+              </div>
+            ))}
+          </div>
+
+          {activeSection==='basic' && (
+            <div className="card" style={{padding:20}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                {[['Full Name','name'],['Job Title','title'],['Email','email'],['Phone','phone'],['Location','location'],['LinkedIn','linkedin'],['GitHub','github']].map(([l,k])=>(
+                  <div key={k} style={{gridColumn:k==='summary'?'1/-1':'auto'}}>
+                    <label>{l}</label>
+                    <input value={resumeData[k]||''} onChange={e=>setResumeData({...resumeData,[k]:e.target.value})}/>
+                  </div>
+                ))}
+                <div style={{gridColumn:'1/-1'}}>
+                  <label>Professional Summary</label>
+                  <textarea rows={3} value={resumeData.summary} onChange={e=>setResumeData({...resumeData,summary:e.target.value})} style={{resize:'vertical'}}/>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeSection==='experience' && (
+            <div className="card" style={{padding:20}}>
+              {resumeData.experience.map((exp,i)=>(
+                <div key={i} style={{marginBottom:20,paddingBottom:20,borderBottom:'1px solid var(--border)'}}>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+                    <div><label>Company</label><input value={exp.company} onChange={e=>{const ex=[...resumeData.experience];ex[i]={...exp,company:e.target.value};setResumeData({...resumeData,experience:ex});}}/></div>
+                    <div><label>Role</label><input value={exp.role} onChange={e=>{const ex=[...resumeData.experience];ex[i]={...exp,role:e.target.value};setResumeData({...resumeData,experience:ex});}}/></div>
+                    <div style={{gridColumn:'1/-1'}}><label>Duration</label><input value={exp.duration}/></div>
+                  </div>
+                  {exp.points.map((pt,j)=>(
+                    <div key={j} style={{marginBottom:8}}><label>Bullet {j+1}</label><input value={pt} onChange={e=>{const ex=[...resumeData.experience];ex[i].points[j]=e.target.value;setResumeData({...resumeData,experience:ex});}}/></div>
+                  ))}
+                  <button className="btn btn-ghost btn-sm" onClick={()=>{const ex=[...resumeData.experience];ex[i].points.push('');setResumeData({...resumeData,experience:ex});}}>+ Add bullet</button>
+                </div>
+              ))}
+              <button className="btn btn-secondary btn-sm" onClick={()=>setResumeData({...resumeData,experience:[...resumeData.experience,{company:'',role:'',duration:'',points:['']}]})}>+ Add Experience</button>
+            </div>
+          )}
+
+          {activeSection==='projects' && (
+            <div className="card" style={{padding:20}}>
+              {resumeData.projects.map((p,i)=>(
+                <div key={i} style={{marginBottom:16,paddingBottom:16,borderBottom:'1px solid var(--border)'}}>
+                  <div style={{marginBottom:8}}><label>Project Name</label><input value={p.name} onChange={e=>{const ps=[...resumeData.projects];ps[i]={...p,name:e.target.value};setResumeData({...resumeData,projects:ps});}}/></div>
+                  <div style={{marginBottom:8}}><label>Tech Stack</label><input value={p.tech} onChange={e=>{const ps=[...resumeData.projects];ps[i]={...p,tech:e.target.value};setResumeData({...resumeData,projects:ps});}}/></div>
+                  <div><label>Description</label><textarea rows={2} value={p.desc} onChange={e=>{const ps=[...resumeData.projects];ps[i]={...p,desc:e.target.value};setResumeData({...resumeData,projects:ps});}} style={{resize:'vertical'}}/></div>
+                </div>
+              ))}
+              <button className="btn btn-secondary btn-sm" onClick={()=>setResumeData({...resumeData,projects:[...resumeData.projects,{name:'',tech:'',desc:''}]})}>+ Add Project</button>
+            </div>
+          )}
+
+          {activeSection==='skills' && (
+            <div className="card" style={{padding:20}}>
+              <label>Skills (comma separated)</label>
+              <input value={resumeData.skills.join(', ')} onChange={e=>setResumeData({...resumeData,skills:e.target.value.split(',').map(s=>s.trim())})}/>
+              <div style={{marginTop:12,display:'flex',flexWrap:'wrap',gap:6}}>
+                {resumeData.skills.map(s=><span key={s} className="badge badge-blue">{s}</span>)}
+              </div>
+            </div>
+          )}
+
+          {/* ATS Results */}
+          {atsScore && (
+            <div className="card" style={{padding:20,marginTop:16,borderColor:'rgba(0,245,160,.2)'}}>
+              <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:16}}>
+                <ScoreRing score={atsScore.score} size={80}/>
+                <div>
+                  <div style={{fontWeight:800,fontSize:16}}>ATS Score</div>
+                  <div style={{fontSize:13,color:'var(--text2)'}}>Your resume is {atsScore.score>=80?'well optimized':'partially optimized'}</div>
+                </div>
+              </div>
+              {Object.entries(atsScore.breakdown).map(([k,v])=>(
+                <div key={k} style={{marginBottom:10}}>
+                  <div className="skill-bar-label"><span style={{fontSize:12,textTransform:'capitalize'}}>{k}</span><span style={{fontSize:12,fontFamily:'Space Mono',color:'var(--accent)'}}>{v}%</span></div>
+                  <div className="skill-bar"><div className="skill-fill" style={{width:`${v}%`,background:`linear-gradient(90deg,var(--accent),var(--accent2))`}}/></div>
+                </div>
+              ))}
+              <div style={{marginTop:16}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--text3)',marginBottom:8}}>SUGGESTIONS</div>
+                {atsScore.suggestions.map((s,i)=>(
+                  <div key={i} style={{display:'flex',gap:8,alignItems:'flex-start',marginBottom:6,fontSize:12,color:'var(--text2)'}}>
+                    <span style={{color:'var(--accent4)',flexShrink:0}}>•</span>{s}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Preview */}
+        <div>
+          <div style={{fontSize:12,fontWeight:700,color:'var(--text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:1}}>Live Preview</div>
+          <div className="resume-preview" style={{fontSize:12}}>
+            <div className="resume-name">{resumeData.name}</div>
+            <div className="resume-title">{resumeData.title}</div>
+            <div style={{color:'#555',marginBottom:16,fontSize:11}}>{resumeData.email} · {resumeData.phone} · {resumeData.location}</div>
+            <div className="resume-section">
+              <h3>Summary</h3>
+              <p>{resumeData.summary}</p>
+            </div>
+            <div className="resume-section">
+              <h3>Experience</h3>
+              {resumeData.experience.map((e,i)=>(
+                <div key={i} style={{marginBottom:10}}>
+                  <div style={{fontWeight:700}}>{e.role} — {e.company}</div>
+                  <div style={{color:'#666',fontSize:11,marginBottom:4}}>{e.duration}</div>
+                  {e.points.map((p,j)=><div key={j} style={{paddingLeft:12,marginBottom:2}}>• {p}</div>)}
+                </div>
+              ))}
+            </div>
+            <div className="resume-section">
+              <h3>Projects</h3>
+              {resumeData.projects.map((p,i)=>(
+                <div key={i} style={{marginBottom:8}}>
+                  <div style={{fontWeight:700}}>{p.name} <span style={{fontWeight:400,color:'#666'}}>| {p.tech}</span></div>
+                  <div>{p.desc}</div>
+                </div>
+              ))}
+            </div>
+            <div className="resume-section">
+              <h3>Education</h3>
+              <div style={{fontWeight:700}}>{resumeData.education.college}</div>
+              <div>{resumeData.education.degree} · CGPA: {resumeData.education.cgpa} · {resumeData.education.year}</div>
+            </div>
+            <div className="resume-section">
+              <h3>Skills</h3>
+              <div>{resumeData.skills.join(' · ')}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── INTERVIEW PAGE ───────────────────────────────────────────────────────────
+function InterviewPage({user, addNotif}) {
+  const [tab, setTab] = useState('book');
+  const [bookingModal, setBookingModal] = useState(null);
+  const [booked, setBooked] = useState([]);
+  const [practiceMode, setPracticeMode] = useState(false);
+  const [aiAnswer, setAiAnswer] = useState('');
+  const [qIdx, setQIdx] = useState(0);
+  const [score, setScore] = useState(null);
+  const [scoring, setScoring] = useState(false);
+
+  const bqQs = [
+    'Tell me about yourself and your journey as a developer.',
+    'Describe a challenging project you worked on. How did you overcome obstacles?',
+    'Where do you see yourself in 5 years?',
+    'Why do you want to join this company?',
+    'Tell me about a time you had to learn something quickly.',
+    'How do you handle conflicts in a team?',
+  ];
+
+  const getAIScore = () => {
+    if(!aiAnswer.trim()) return;
+    setScoring(true);
+    setTimeout(()=>{
+      const s = Math.floor(Math.random()*25)+65;
+      setScore({overall:s,communication:Math.floor(Math.random()*20)+72,content:Math.floor(Math.random()*25)+60,confidence:Math.floor(Math.random()*20)+68,feedback:'Good answer structure! You used the STAR method well. Try to be more specific with metrics and outcomes. Your communication was clear, but consider adding more quantified results to strengthen your response.'});
+      setScoring(false);
+    }, 2000);
+  };
+
+  return (
+    <div className="page-content fade-in">
+      <div className="section-header">
+        <div className="section-title">Interview Center</div>
+      </div>
+      <div className="tabs" style={{maxWidth:400}}>
+        {['book','practice','results'].map(t=><div key={t} className={`tab ${tab===t?'active':''}`} onClick={()=>setTab(t)}>{t==='book'?'Book Interview':t==='practice'?'AI Practice':'My Sessions'}</div>)}
+      </div>
+
+      {tab==='book' && (
+        <div className="grid-2" style={{gap:16}}>
+          {INTERVIEWS.map(iv=>(
+            <div key={iv.id} className="card" style={{padding:20}}>
+              <div style={{display:'flex',gap:14,marginBottom:14}}>
+                <div style={{fontSize:40}}>{iv.emoji}</div>
+                <div>
+                  <div style={{fontWeight:800,fontSize:15}}>{iv.mentor}</div>
+                  <div style={{fontSize:12,color:'var(--text2)',marginBottom:4}}>{iv.role}</div>
+                  <div style={{display:'flex',gap:6}}>
+                    <span className="badge badge-blue">{iv.type}</span>
+                    <span style={{fontSize:12,color:'var(--accent4)'}}>⭐ {iv.rating}</span>
+                  </div>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
+                {iv.expertise.map(e=><span key={e} className="tag">{e}</span>)}
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',borderRadius:8,padding:'10px 14px',marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:12,color:'var(--text3)'}}>Next Slot</div>
+                  <div style={{fontWeight:700,fontSize:14}}>{iv.date} · {iv.time}</div>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontSize:12,color:'var(--text3)'}}>Price</div>
+                  <div style={{fontWeight:700,fontSize:18,color:'var(--accent)',fontFamily:'Space Mono'}}>₹{iv.price}</div>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button className="btn btn-primary btn-sm" style={{flex:1,justifyContent:'center'}} onClick={()=>setBookingModal(iv)}>Book Now</button>
+                <div style={{fontSize:12,color:'var(--text3)',display:'flex',alignItems:'center',gap:4}}>🎫 {iv.slots} slots left</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab==='practice' && (
+        <div style={{maxWidth:700}}>
+          <div className="card" style={{padding:24,marginBottom:16}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div>
+                <div style={{fontWeight:700,fontSize:15}}>Behavioral Question {qIdx+1}/{bqQs.length}</div>
+                <div style={{fontSize:12,color:'var(--text2)'}}>Answer out loud or type your response</div>
+              </div>
+              <div className="badge badge-blue">STAR Method</div>
+            </div>
+            <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:18,marginBottom:16,fontSize:15,fontWeight:600,lineHeight:1.5}}>
+              💬 {bqQs[qIdx]}
+            </div>
+            <textarea rows={6} value={aiAnswer} onChange={e=>setAiAnswer(e.target.value)} placeholder="Type your answer here using STAR method (Situation, Task, Action, Result)..." style={{resize:'vertical',marginBottom:12}}/>
+            <div style={{display:'flex',gap:8}}>
+              <button className="btn btn-ghost btn-sm" onClick={()=>{setQIdx((qIdx-1+bqQs.length)%bqQs.length);setAiAnswer('');setScore(null);}}>← Prev</button>
+              <button className="btn btn-primary btn-sm" onClick={getAIScore} disabled={scoring||!aiAnswer.trim()}>
+                {scoring?<><span className="loading"/> Scoring...</>:'🤖 Get AI Score'}
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={()=>{setQIdx((qIdx+1)%bqQs.length);setAiAnswer('');setScore(null);}}>Next →</button>
+            </div>
+          </div>
+
+          {score && (
+            <div className="card" style={{padding:24,borderColor:'rgba(0,245,160,.2)'}}>
+              <div style={{display:'flex',gap:20,alignItems:'center',marginBottom:16}}>
+                <ScoreRing score={score.overall} size={90}/>
+                <div>
+                  <div style={{fontWeight:800,fontSize:18}}>AI Interview Score</div>
+                  <div style={{fontSize:13,color:'var(--text2)'}}>Based on STAR framework analysis</div>
+                </div>
+              </div>
+              <div className="grid-3" style={{marginBottom:16}}>
+                {[['Communication',score.communication,'var(--accent)'],['Content',score.content,'var(--accent2)'],['Confidence',score.confidence,'var(--accent4)']].map(([l,v,c])=>(
+                  <div key={l} style={{textAlign:'center',background:'var(--surface2)',borderRadius:8,padding:12}}>
+                    <div style={{fontSize:22,fontWeight:800,color:c,fontFamily:'Space Mono'}}>{v}</div>
+                    <div style={{fontSize:11,color:'var(--text3)'}}>{l}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{background:'var(--surface2)',borderRadius:8,padding:14,fontSize:13,lineHeight:1.6,color:'var(--text2)'}}>
+                <span style={{color:'var(--accent)',fontWeight:700}}>🤖 Feedback: </span>{score.feedback}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab==='results' && (
+        <div>
+          {booked.length===0 ? (
+            <div style={{textAlign:'center',padding:60,color:'var(--text3)'}}>
+              <div style={{fontSize:48,marginBottom:12}}>🎤</div>
+              <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>No interviews booked yet</div>
+              <div style={{fontSize:13,marginBottom:20}}>Book a mock interview with an expert</div>
+              <button className="btn btn-primary" onClick={()=>setTab('book')}>Browse Interviewers →</button>
+            </div>
+          ) : booked.map(b=>(
+            <div key={b.id} className="card" style={{padding:20,marginBottom:12}}>
+              <div style={{display:'flex',justifyContent:'space-between'}}>
+                <div style={{fontWeight:700}}>{b.mentor}</div>
+                <span className="badge badge-green">Booked ✓</span>
+              </div>
+              <div style={{fontSize:13,color:'var(--text2)',marginTop:4}}>{b.date} · {b.time}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Booking Modal */}
+      {bookingModal && (
+        <div className="modal-overlay" onClick={()=>setBookingModal(null)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div style={{fontWeight:800,fontSize:18,marginBottom:4}}>Book Interview</div>
+            <div style={{fontSize:13,color:'var(--text2)',marginBottom:20}}>with {bookingModal.mentor}</div>
+            <div style={{background:'var(--surface2)',borderRadius:10,padding:16,marginBottom:16}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
+                <span>{bookingModal.type} Interview</span>
+                <span style={{color:'var(--accent)',fontWeight:700}}>₹{bookingModal.price}</span>
+              </div>
+              <div style={{fontSize:12,color:'var(--text2)'}}>{bookingModal.date} · {bookingModal.time} · 60 minutes</div>
+            </div>
+            <div style={{marginBottom:16}}>
+              <label>Preferred topics to cover</label>
+              <textarea rows={3} placeholder="E.g., System Design, Arrays, Dynamic Programming..." style={{resize:'vertical'}}/>
+            </div>
+            <div style={{marginBottom:20}}>
+              <label>Payment (Demo)</label>
+              <input placeholder="Card number (demo mode - any number works)"/>
+            </div>
+            <div style={{display:'flex',gap:10}}>
+              <button className="btn btn-primary" style={{flex:1,justifyContent:'center'}} onClick={()=>{setBooked([...booked,bookingModal]);setBookingModal(null);setTab('results');addNotif({type:'success',msg:`Interview booked with ${bookingModal.mentor}! ✅`,time:'now'});}}>Confirm & Pay ₹{bookingModal.price}</button>
+              <button className="btn btn-ghost" onClick={()=>setBookingModal(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── JOBS PAGE ────────────────────────────────────────────────────────────────
+function JobsPage({user, addNotif}) {
+  const [search, setSearch] = useState('');
+  const [applied, setApplied] = useState([]);
+  const [filter, setFilter] = useState('all');
+
+  const filtered = JOBS.filter(j=>{
+    if(search && !j.title.toLowerCase().includes(search.toLowerCase()) && !j.company.toLowerCase().includes(search.toLowerCase())) return false;
+    if(filter==='eligible' && j.minScore > user.careerScore.overall) return false;
+    if(filter==='matched' && j.match < 70) return false;
+    return true;
+  });
+
+  return (
+    <div className="page-content fade-in">
+      <div className="section-header">
+        <div>
+          <div className="section-title">Job Board</div>
+          <div style={{fontSize:13,color:'var(--text2)',marginTop:4}}>Matched to your career score: <span style={{color:'var(--accent)',fontWeight:700}}>{user.careerScore.overall}/100</span></div>
+        </div>
+      </div>
+
+      <div style={{background:'linear-gradient(135deg,rgba(0,245,160,.1),rgba(0,200,255,.05))',border:'1px solid rgba(0,245,160,.2)',borderRadius:12,padding:16,marginBottom:20,display:'flex',gap:16,flexWrap:'wrap',alignItems:'center'}}>
+        <div style={{fontSize:16}}>🤖</div>
+        <div>
+          <div style={{fontWeight:700,fontSize:14}}>AI Job Matching Active</div>
+          <div style={{fontSize:12,color:'var(--text2)'}}>Jobs are ranked by match % based on your skills, roadmap progress, and career score</div>
+        </div>
+        <div style={{marginLeft:'auto',display:'flex',gap:8}}>
+          <span className="badge badge-green">Score: {user.careerScore.overall}/100</span>
+          <span className="badge badge-blue">{JOBS.filter(j=>j.minScore<=user.careerScore.overall).length} jobs eligible</span>
+        </div>
+      </div>
+
+      <div style={{display:'flex',gap:12,marginBottom:20,flexWrap:'wrap'}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search jobs or companies..." style={{flex:1,minWidth:200}}/>
+        <div style={{display:'flex',gap:4}}>
+          {['all','eligible','matched'].map(f=><button key={f} className={`btn btn-sm ${filter===f?'btn-primary':'btn-ghost'}`} onClick={()=>setFilter(f)}>{f==='all'?'All':f==='eligible'?'Eligible':'Top Matches'}</button>)}
+        </div>
+      </div>
+
+      <div style={{display:'grid',gap:12}}>
+        {[...filtered].sort((a,b)=>b.match-a.match).map(job=>{
+          const eligible = job.minScore <= user.careerScore.overall;
+          const isApplied = applied.includes(job.id);
+          return (
+            <div key={job.id} className="card job-card" style={{borderLeft:`3px solid ${job.match>=85?'var(--accent)':job.match>=70?'var(--accent2)':'var(--border)'}`}}>
+              <div style={{display:'flex',gap:16,alignItems:'flex-start'}}>
+                <div className="company-logo" style={{background:'var(--surface2)',color:'var(--text)',fontSize:24}}>{job.emoji}</div>
+                <div style={{flex:1}}>
+                  <div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
+                    <div>
+                      <div style={{fontWeight:800,fontSize:16}}>{job.title}</div>
+                      <div style={{fontSize:13,color:'var(--text2)',marginBottom:8}}>{job.company} · {job.location}</div>
+                    </div>
+                    <div style={{textAlign:'right'}}>
+                      <div style={{fontSize:20,fontWeight:800,color:job.match>=85?'var(--accent)':job.match>=70?'var(--accent2)':'var(--text3)',fontFamily:'Space Mono'}}>{job.match}%</div>
+                      <div style={{fontSize:10,color:'var(--text3)'}}>Match Score</div>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:10}}>
+                    <span className="badge badge-gray">{job.type}</span>
+                    <span className="badge badge-green">{job.salary}</span>
+                    {!eligible && <span className="badge badge-red">Need {job.minScore} score</span>}
+                    {eligible && <span className="badge badge-blue">✓ You're eligible</span>}
+                  </div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:12}}>
+                    {job.skills.map(s=><span key={s} className="tag">{s}</span>)}
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <div style={{fontSize:12,color:'var(--text3)'}}>👥 {job.applicants} applicants · 🕐 {job.posted}</div>
+                    <button className={`btn btn-sm ${isApplied?'btn-ghost':eligible?'btn-primary':'btn-ghost'}`} disabled={isApplied||!eligible}
+                      onClick={()=>{setApplied([...applied,job.id]);addNotif({type:'success',msg:`Applied to ${job.title} at ${job.company}!`,time:'now'});}}>
+                      {isApplied?'✅ Applied':eligible?'Apply Now →':'Improve Score'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── AI COACH PAGE ────────────────────────────────────────────────────────────
+function AICoachPage({user, setPage}) {
+  const [messages, setMessages] = useState([
+    {role:'bot',text:`Hey ${user.name.split(' ')[0]}! 👋 I'm your AI Career Coach. Your current career score is **${user.careerScore.overall}/100**.\n\nBased on your progress, here's what I recommend:\n\n1. 📊 Your DSA score (${user.careerScore.dsa}/100) needs improvement — solve 10 more tree/graph problems\n2. 📄 Resume score (${user.careerScore.resume}/100) — add more quantified achievements\n3. 🎤 Book a mock interview to boost your interview score\n\nAsk me anything about your coding journey!`}
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const chatRef = useRef(null);
+
+  const BOT_RESPONSES = {
+    default: ["Great question! Based on your progress, I recommend focusing on your weakest areas first.", "I've analyzed your profile. Your consistency is strong (85/100) — keep that streak going!", "For your career score to reach 75+, focus on: 1) Solve 15 more DSA problems 2) Get your resume ATS score to 80+ 3) Complete one mock interview"],
+    dsa: ["Your DSA score is 58/100. I recommend: Arrays → Linked Lists → Trees → Graphs. Start with 'Two Sum' variations and work up to Binary Trees.", "For DSA improvement: Practice 2 problems daily, focus on time complexity analysis, and join our daily DSA contest!"],
+    resume: ["Your resume ATS score is 54/100. Key improvements: 1) Add metrics to all experience points 2) Include keywords: Docker, CI/CD, REST APIs 3) Quantify your project impact"],
+    interview: ["You need 8 more points for interview readiness. Book a mock interview — it can add 15-20 points to your interview score instantly!", "For interview prep: Master STAR method for behavioral questions, and practice 3 system design problems this week."],
+    job: ["Based on your score (67/100), you're eligible for: Zepto Frontend (91% match), Razorpay Backend (74%), PhonePe Internship (95%)", "Top job match: PhonePe Fullstack Intern at 95% match! Your React + Node skills are perfect for them."],
+  };
+
+  const getResponse = (msg) => {
+    const m = msg.toLowerCase();
+    if(m.includes('dsa') || m.includes('algorithm') || m.includes('data structure')) return BOT_RESPONSES.dsa[Math.floor(Math.random()*BOT_RESPONSES.dsa.length)];
+    if(m.includes('resume') || m.includes('ats') || m.includes('cv')) return BOT_RESPONSES.resume[Math.floor(Math.random()*BOT_RESPONSES.resume.length)];
+    if(m.includes('interview') || m.includes('mock')) return BOT_RESPONSES.interview[Math.floor(Math.random()*BOT_RESPONSES.interview.length)];
+    if(m.includes('job') || m.includes('placement') || m.includes('work')) return BOT_RESPONSES.job[Math.floor(Math.random()*BOT_RESPONSES.job.length)];
+    return BOT_RESPONSES.default[Math.floor(Math.random()*BOT_RESPONSES.default.length)];
+  };
+
+  const send = () => {
+    if(!input.trim()) return;
+    const userMsg = input.trim();
+    setInput('');
+    setMessages(m=>[...m,{role:'user',text:userMsg}]);
+    setLoading(true);
+    setTimeout(()=>{
+      setMessages(m=>[...m,{role:'bot',text:getResponse(userMsg)}]);
+      setLoading(false);
+    }, 1000+Math.random()*1000);
+  };
+
+  useEffect(()=>{if(chatRef.current) chatRef.current.scrollTop=chatRef.current.scrollHeight;},[messages]);
+
+  const suggestions = ['How to improve DSA score?','Analyze my resume','Am I interview ready?','Top job matches for me','What should I study next?'];
+
+  return (
+    <div className="page-content fade-in">
+      <div className="grid-2" style={{gap:20,alignItems:'start'}}>
+        {/* Chat */}
+        <div className="card" style={{overflow:'hidden',display:'flex',flexDirection:'column',height:'calc(100vh - 140px)'}}>
+          <div style={{padding:'16px 20px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10}}>
+            <div style={{width:36,height:36,background:'linear-gradient(135deg,var(--accent),var(--accent2))',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🤖</div>
+            <div>
+              <div style={{fontWeight:700,fontSize:14}}>AI Career Coach</div>
+              <div style={{fontSize:11,color:'var(--accent)',display:'flex',alignItems:'center',gap:4}}><span style={{width:6,height:6,background:'var(--accent)',borderRadius:'50%',animation:'pulse 1s infinite'}}/>Online</div>
+            </div>
+          </div>
+          <div ref={chatRef} style={{flex:1,overflowY:'auto',padding:16}}>
+            {messages.map((m,i)=>(
+              <div key={i} className={`ai-message ${m.role}`} style={{whiteSpace:'pre-line'}}>{m.text.replace(/\*\*(.*?)\*\*/g,'$1')}</div>
+            ))}
+            {loading && <div className="ai-message bot"><span className="loading"/></div>}
+          </div>
+          <div style={{padding:12,borderTop:'1px solid var(--border)'}}>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
+              {suggestions.slice(0,3).map(s=>(
+                <button key={s} className="btn btn-ghost btn-sm" style={{fontSize:11}} onClick={()=>{setInput(s);}}>{s}</button>
+              ))}
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask your AI coach anything..."/>
+              <button className="btn btn-primary btn-sm" onClick={send}>Send</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Panel */}
+        <div>
+          {/* Career Score */}
+          <div className="card" style={{padding:20,marginBottom:16}}>
+            <div style={{fontWeight:800,fontSize:15,marginBottom:16}}>🎯 Career Readiness Score</div>
+            <div style={{display:'flex',justifyContent:'center',marginBottom:16}}>
+              <ScoreRing score={user.careerScore.overall} size={120}/>
+            </div>
+            <div style={{background:user.careerScore.overall>=75?'rgba(0,245,160,.1)':'rgba(255,217,61,.1)',border:`1px solid ${user.careerScore.overall>=75?'rgba(0,245,160,.3)':'rgba(255,217,61,.3)'}`,borderRadius:10,padding:12,textAlign:'center',marginBottom:16}}>
+              <div style={{fontWeight:700,color:user.careerScore.overall>=75?'var(--accent)':'var(--accent4)'}}>
+                {user.careerScore.overall>=75?'✅ Interview Ready!':'⏳ Not Yet — Need '+(75-user.careerScore.overall)+' more points'}
+              </div>
+            </div>
+            {Object.entries(user.careerScore).filter(([k])=>k!=='overall').map(([k,v])=>{
+              const labels={coding:'💻 Coding',dsa:'📊 DSA',consistency:'🔥 Consistency',resume:'📄 Resume',interview:'🎤 Interview',projects:'🏗️ Projects'};
+              return (
+                <div key={k} style={{marginBottom:10}}>
+                  <div className="skill-bar-label"><span style={{fontSize:12}}>{labels[k]}</span><span style={{fontSize:12,fontFamily:'Space Mono',color:'var(--accent)'}}>{v}/100</span></div>
+                  <div className="skill-bar"><div className="skill-fill" style={{width:`${v}%`,background:'linear-gradient(90deg,var(--accent),var(--accent2))'}}/></div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Weekly Report */}
+          <div className="card" style={{padding:20}}>
+            <div style={{fontWeight:800,fontSize:15,marginBottom:16}}>📊 Weekly Report</div>
+            {[
+              {label:'Problems Solved',val:'7',delta:'+3 vs last week',up:true},
+              {label:'Study Time',val:'14.5h',delta:'+2h vs last week',up:true},
+              {label:'Streak',val:`${user.streak} days`,delta:'Longest: 18 days',up:false},
+              {label:'XP Earned',val:'480 XP',delta:'Top 12% this week',up:true},
+            ].map(s=>(
+              <div key={s.label} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px solid rgba(30,45,74,.5)'}}>
+                <div style={{fontSize:13,color:'var(--text2)'}}>{s.label}</div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontWeight:700,fontFamily:'Space Mono',color:'var(--accent)'}}>{s.val}</div>
+                  <div style={{fontSize:11,color:s.up?'#4ADE80':'var(--text3)'}}>{s.up?'↑':''}{s.delta}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── LEADERBOARD ──────────────────────────────────────────────────────────────
+function LeaderboardPage({user}) {
+  const leaders = [
+    {rank:1,name:'Kavya Reddy',score:94,solved:187,streak:45,badge:'🏆'},
+    {rank:2,name:'Rahul Joshi',score:91,solved:164,streak:32,badge:'🥈'},
+    {rank:3,name:'Priya Sharma',score:88,solved:156,streak:28,badge:'🥉'},
+    {rank:4,name:'Arjun Mehta',score:85,solved:143,streak:21,badge:''},
+    {rank:5,name:'Sneha Patel',score:82,solved:131,streak:19,badge:''},
+    {rank:7,name:user.name,score:user.careerScore.overall,solved:user.solvedProblems.length,streak:user.streak,badge:'⭐',isMe:true},
+    {rank:8,name:'Deepak Verma',score:65,solved:89,streak:9,badge:''},
+    {rank:9,name:'Meera Nair',score:62,solved:81,streak:7,badge:''},
+    {rank:10,name:'Rohit Kumar',score:58,solved:72,streak:5,badge:''},
+  ];
+
+  return (
+    <div className="page-content fade-in">
+      <div className="section-header"><div className="section-title">🏆 Global Leaderboard</div><span className="badge badge-green" style={{animation:'pulse 2s infinite'}}>LIVE</span></div>
+
+      {/* Top 3 */}
+      <div style={{display:'flex',gap:16,marginBottom:28,justifyContent:'center',alignItems:'flex-end'}}>
+        {[leaders[1],leaders[0],leaders[2]].map((l,idx)=>{
+          const order = [2,1,3];
+          const heights = ['160px','200px','130px'];
+          const colors = ['#C0C0C0','#FFD700','#CD7F32'];
+          return (
+            <div key={l.rank} style={{textAlign:'center',width:120}}>
+              <div style={{background:'linear-gradient(135deg,var(--surface2),var(--bg))',borderRadius:'50%',width:64,height:64,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,margin:'0 auto 8px',border:`2px solid ${colors[idx]}`}}>{l.badge||'👤'}</div>
+              <div style={{fontWeight:700,fontSize:13,marginBottom:2}}>{l.name.split(' ')[0]}</div>
+              <div style={{fontSize:11,color:'var(--text3)',marginBottom:8}}>{l.score} pts</div>
+              <div style={{height:heights[idx],background:`linear-gradient(180deg,${colors[idx]}33,transparent)`,border:`1px solid ${colors[idx]}44`,borderRadius:'8px 8px 0 0',display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:10,fontSize:20,fontWeight:800,color:colors[idx]}}>{order[idx]}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Full list */}
+      <div className="card" style={{overflow:'hidden'}}>
+        {leaders.map((l,i)=>(
+          <div key={l.rank} className="lb-row" style={{borderBottom:'1px solid rgba(30,45,74,.5)',background:l.isMe?'rgba(0,245,160,.05)':'',borderLeft:l.isMe?'3px solid var(--accent)':'3px solid transparent'}}>
+            <div className="lb-rank" style={{color:l.rank<=3?['#FFD700','#C0C0C0','#CD7F32'][l.rank-1]:'var(--text3)'}}>{l.rank}</div>
+            <div style={{width:40,height:40,borderRadius:'50%',background:'linear-gradient(135deg,var(--surface2),var(--bg))',display:'flex',alignItems:'center',justifyContent:'center',border:`2px solid ${l.isMe?'var(--accent)':'var(--border)'}`}}>
+              {l.isMe?'⭐':l.badge||'👤'}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:700,fontSize:13}}>{l.name} {l.isMe&&<span className="badge badge-green" style={{fontSize:9}}>YOU</span>}</div>
+              <div style={{fontSize:11,color:'var(--text3)'}}>🔥 {l.streak} day streak · 💻 {l.solved} solved</div>
+            </div>
+            <div style={{fontFamily:'Space Mono',fontWeight:700,color:'var(--accent)',fontSize:16}}>{l.score}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const [page, setPage] = useState('landing');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(INITIAL_USER);
+  const [activeProblem, setActiveProblem] = useState(null);
+  const [toasts, setToasts] = useState([]);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+
+  const updateUser = useCallback(fn => setUser(u => typeof fn==='function'?fn(u):{...u,...fn}), []);
+
+  const addNotif = useCallback((notif) => {
+    const id = Date.now();
+    setToasts(t=>[...t,{...notif,id}]);
+    setTimeout(()=>setToasts(t=>t.filter(n=>n.id!==id)),5000);
+  },[]);
+
+  const dismissToast = useCallback(id=>setToasts(t=>t.filter(n=>n.id!==id)),[]);
+
+  const unreadCount = user.notifications.filter(n=>!n.read).length;
+
+  const PAGE_TITLES = {
+    dashboard:'Dashboard',roadmap:'Roadmap',problems:'Problems',editor:'Code Editor',
+    courses:'Courses',resume:'Resume Builder',interview:'Interview Center',
+    jobs:'Job Board',ai:'AI Coach',leaderboard:'Leaderboard',
+  };
+
+  // Landing / Auth
+  if(page==='landing') return <LandingPage setPage={setPage} setIsLoggedIn={setIsLoggedIn}/>;
+  if(page==='login') return <AuthPage type="login" setPage={setPage} setIsLoggedIn={setIsLoggedIn}/>;
+  if(page==='register') return <AuthPage type="register" setPage={setPage} setIsLoggedIn={setIsLoggedIn}/>;
+
+  if(!isLoggedIn) { setPage('landing'); return null; }
+
+  const renderPage = () => {
+    switch(page) {
+      case 'dashboard': return <Dashboard user={user} setPage={setPage} setActiveProblem={setActiveProblem}/>;
+      case 'problems': return <ProblemsPage user={user} setPage={setPage} setActiveProblem={setActiveProblem}/>;
+      case 'editor': return <EditorPage problem={activeProblem} user={user} addNotif={addNotif} updateUser={updateUser}/>;
+      case 'roadmap': return <RoadmapPage user={user} setPage={setPage} updateUser={updateUser}/>;
+      case 'courses': return <CoursesPage user={user} addNotif={addNotif}/>;
+      case 'resume': return <ResumePage user={user} addNotif={addNotif}/>;
+      case 'interview': return <InterviewPage user={user} addNotif={addNotif}/>;
+      case 'jobs': return <JobsPage user={user} addNotif={addNotif}/>;
+      case 'ai': return <AICoachPage user={user} setPage={setPage}/>;
+      case 'leaderboard': return <LeaderboardPage user={user}/>;
+      default: return <Dashboard user={user} setPage={setPage} setActiveProblem={setActiveProblem}/>;
+    }
+  };
+
+  return (
+    <div>
+      <Sidebar page={page} setPage={p=>{setPage(p);setShowNotifPanel(false);}} user={user}/>
+      <div className="main">
+        {page==='editor' ? (
+          <div>
+            <div className="topbar">
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <button className="btn btn-ghost btn-sm" onClick={()=>setPage('problems')}>← Problems</button>
+                {activeProblem && <div style={{fontWeight:700}}>{activeProblem.title}</div>}
+              </div>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <span className={`badge badge-${activeProblem?.difficulty==='Easy'?'green':activeProblem?.difficulty==='Medium'?'yellow':'red'}`}>{activeProblem?.difficulty}</span>
+                <span className="badge badge-gray">+{activeProblem?.xp} XP</span>
+              </div>
+            </div>
+            {renderPage()}
+          </div>
+        ) : (
+          <div>
+            <Topbar title={PAGE_TITLES[page]||'Vibe Coding'} user={user} setPage={setPage} unreadCount={unreadCount} showNotifs={showNotifPanel} setShowNotifs={setShowNotifPanel}/>
+            {showNotifPanel && (
+              <div style={{position:'fixed',top:60,right:0,width:360,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'0 0 0 12px',padding:16,zIndex:200,maxHeight:'70vh',overflowY:'auto'}}>
+                <div style={{fontWeight:700,marginBottom:12,display:'flex',justifyContent:'space-between'}}>
+                  Notifications
+                  <button className="btn btn-ghost btn-sm" onClick={()=>setShowNotifPanel(false)}>✕</button>
+                </div>
+                {user.notifications.map(n=>(
+                  <div key={n.id} style={{padding:'12px',borderRadius:8,marginBottom:8,background:n.read?'':'var(--surface2)',border:'1px solid var(--border)',display:'flex',gap:10}}>
+                    <span>{n.type==='success'?'✅':'ℹ️'}</span>
+                    <div>
+                      <div style={{fontSize:13}}>{n.msg}</div>
+                      <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{n.time}</div>
+                    </div>
+                    {!n.read && <div style={{width:6,height:6,background:'var(--accent)',borderRadius:'50%',marginLeft:'auto',marginTop:4,flexShrink:0}}/>}
+                  </div>
+                ))}
+              </div>
+            )}
+            {renderPage()}
+          </div>
+        )}
+      </div>
+      <NotifToast notifs={toasts} dismiss={dismissToast}/>
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+</body>
+</html>
